@@ -37,22 +37,63 @@ export default function NewBatchModal({ isOpen, onClose, shoeDatabase = [], onSu
 
     try {
       setIsSubmitting(true);
+      
+      // 1. OBTENER RECETA PARA ESTE ZAPATO
+      const { data: recipeData, error: recipeErr } = await supabase
+        .from('recetas_produccion')
+        .select('*')
+        .eq('producto_id', selectedShoe.id);
+        
+      if (recipeErr) throw recipeErr;
+
+      // 2. DESCONTAR MATERIALES BASADO EN LA DOCENA
+      if (recipeData && recipeData.length > 0) {
+        const materialIds = recipeData.map(r => r.material_id);
+        
+        // Consultar el stock actual de los ingredientes
+        const { data: materialsData, error: matErr } = await supabase
+          .from('inventario_materiales')
+          .select('id, stock_actual, nombre')
+          .in('id', materialIds);
+          
+        if (matErr) throw matErr;
+
+        // Armar el lote de actualizaciones a disminuir
+        const stockUpdates = recipeData.map(req => {
+          const mat = materialsData?.find(m => m.id === req.material_id);
+          if (mat) {
+            const gastoTotal = parseFloat(req.cantidad_por_docena) * cantDocenas;
+            const nuevoStockInsumo = parseFloat(mat.stock_actual) - gastoTotal;
+            
+            return supabase
+              .from('inventario_materiales')
+              .update({ stock_actual: nuevoStockInsumo })
+              .eq('id', mat.id);
+          }
+          return null;
+        }).filter(Boolean);
+
+        // Ejecutarlos en paralelo
+        await Promise.all(stockUpdates);
+      }
+
+      // 3. ENTRADA DEL ALMACEN DEL ZAPATO TERMINADO
       const newStock = parseFloat(selectedShoe.stock_docenas) + cantDocenas;
 
-      const { error } = await supabase
+      const { error: finalErr } = await supabase
         .from('productos_finales')
         .update({ stock_docenas: newStock })
         .eq('id', selectedShoe.id);
 
-      if (error) throw error;
+      if (finalErr) throw finalErr;
       
-      toast.success(`Se ingresaron ${cantDocenas} docenas al almacén para el modelo ${selectedShoe.codigo_modelo}.`);
+      toast.success(`Se ingresaron ${cantDocenas} docenas de ${selectedShoe.codigo_modelo} y se descontó la materia prima del inventario central.`);
       if (onSuccess) onSuccess();
       else onClose();
       
     } catch (err) {
-      console.error('Error al actualizar docenas:', err.message);
-      toast.error('No se pudo guardar el nuevo lote.');
+      console.error('Error procesando lote y/o B.O.M:', err.message);
+      toast.error('Ocurrió un error al guardar o descontar sub-insumos.');
     } finally {
       setIsSubmitting(false);
     }
