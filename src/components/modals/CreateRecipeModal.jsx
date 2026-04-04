@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { X, Save, Plus, Trash2, Beaker } from 'lucide-react';
 
-export default function CreateRecipeModal({ isOpen, onClose }) {
+export default function CreateRecipeModal({ isOpen, onClose, categories = [] }) {
   // Estado local para simular la lista de ingredientes dinámicos
   const [ingredients, setIngredients] = useState([
-    { category: 'Cueros', name: 'Cuero (Variable según Lote)', amount: '', unit: 'Pies²' }
+    { category: '', name: '', amount: '', unit: '' }
   ]);
 
   if (!isOpen) return null;
@@ -83,12 +83,10 @@ export default function CreateRecipeModal({ isOpen, onClose }) {
               {ingredients.map((ing, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
                   <select className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-gray-300 focus:border-brand-peach outline-none">
-                    <option>Categoría...</option>
-                    <option>Cueros</option>
-                    <option>Suelas</option>
-                    <option>Químicos</option>
-                    <option>Avíos</option>
-                    <option>Empaque</option>
+                    <option value="">Categoría...</option>
+                    {categories.map((cat, catIdx) => (
+                      <option key={catIdx} value={cat}>{cat}</option>
+                    ))}
                   </select>
                   
                   <input type="text" className="flex-[4] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-brand-peach outline-none" placeholder="Sub-Insumo (Ej. Cuero Variable)" />

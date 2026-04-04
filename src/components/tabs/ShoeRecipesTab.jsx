@@ -11,11 +11,24 @@ export default function ShoeRecipesTab() {
 
   // Datos reales en lugar de mocks
   const [shoeDatabase, setShoeDatabase] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRecipes = async () => {
+  const fetchRecipesAndCategories = async () => {
     try {
       setLoading(true);
+
+      // Traer categorías dinámicas
+      const { data: catData, error: catError } = await supabase
+        .from('categorias_insumos')
+        .select('nombre')
+        .order('nombre', { ascending: true });
+
+      if (!catError && catData) {
+        setCategories(catData.map(c => c.nombre));
+      }
+
+      // Traer zapatos
       const { data, error } = await supabase
         .from('productos_finales')
         .select('*')
@@ -23,8 +36,6 @@ export default function ShoeRecipesTab() {
 
       if (error) throw error;
       
-      // Adaptación temporal mientras construimos el constructor de recetas 
-      // para inyectar una prop 'recipe' vacía que la UI necesita renderizar
       const adaptedData = (data || []).map(item => ({
         ...item,
         name: item.nombre,
@@ -34,14 +45,14 @@ export default function ShoeRecipesTab() {
       
       setShoeDatabase(adaptedData);
     } catch (error) {
-      console.error('Error fetching recipes:', error.message);
+      console.error('Error fetching recipes or categories:', error.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRecipes();
+    fetchRecipesAndCategories();
   }, []);
 
   const filteredShoes = shoeDatabase.filter(shoe => 
@@ -149,6 +160,7 @@ export default function ShoeRecipesTab() {
       <CreateRecipeModal 
         isOpen={isCreateModalOpen} 
         onClose={() => setIsCreateModalOpen(false)} 
+        categories={categories}
       />
     </>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Save } from 'lucide-react';
 
-export default function MaterialRegistrationModal({ isOpen, onClose }) {
+export default function MaterialRegistrationModal({ isOpen, onClose, categories = [] }) {
   if (!isOpen) return null;
 
   return (
@@ -27,12 +27,10 @@ export default function MaterialRegistrationModal({ isOpen, onClose }) {
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Categoría del Insumo</label>
               <select className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-gold transition-colors appearance-none font-medium">
-                <option>Selecciona una categoría...</option>
-                <option>Cueros (Ternera, badana, gamuza)</option>
-                <option>Suelas (Goma, TR, Eva, Cuero)</option>
-                <option>Químicos (Pegamentos, diluyentes)</option>
-                <option>Avíos (Hilos, cierres, ojalillos)</option>
-                <option>Empaque (Cajas, bolsas, papel seda)</option>
+                <option value="">Selecciona categoría...</option>
+                {categories.map((cat, idx) => (
+                  <option key={idx} value={cat}>{cat}</option>
+                ))}
               </select>
             </div>
             <div>
