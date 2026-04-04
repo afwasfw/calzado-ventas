@@ -12,11 +12,11 @@ export default function OverviewTab({ session }) {
     pendingOrders: 0,
     criticalMaterials: 0,
     totalModels: 0,
-    recentOrders: []
+    recentOrders: [],
+    catalog: []
   });
 
-  useEffect(() => {
-    async function loadStats() {
+  const loadStats = async () => {
       try {
         // Pedidos Pendientes
         const { data: pedidos } = await supabase
@@ -32,23 +32,26 @@ export default function OverviewTab({ session }) {
         
         const criticalCount = (materiales || []).filter(m => m.stock_actual <= m.stock_alerta).length;
 
-        // Total Modelos
-        const { count: modelsCount } = await supabase
+        // Catálogo entero en vez de count limitante
+        const { data: modelsData } = await supabase
           .from('productos_finales')
-          .select('*', { count: 'exact', head: true });
+          .select('*')
+          .order('created_at', { ascending: false });
 
         setStats({
           pendingOrders: pedidos?.length || 0,
           criticalMaterials: criticalCount,
-          totalModels: modelsCount || 0,
-          recentOrders: pedidos?.slice(0, 5) || [] // Solo los 5 últimos para la bandeja
+          totalModels: modelsData?.length || 0,
+          recentOrders: pedidos?.slice(0, 5) || [],
+          catalog: modelsData || []
         });
 
       } catch (err) {
         console.error('Error loading dashboard stats:', err);
       }
-    }
+  };
 
+  useEffect(() => {
     loadStats();
   }, []);
 
@@ -181,8 +184,19 @@ export default function OverviewTab({ session }) {
       </div>
 
       {/* RENDERIZADO CONDICIONAL DE LOS MODALES */}
-      <ManualOrderModal isOpen={isOrderModalOpen} onClose={() => setIsOrderModalOpen(false)} />
-      <StockAdjustmentModal isOpen={isStockModalOpen} onClose={() => setIsStockModalOpen(false)} />
+      <ManualOrderModal 
+        isOpen={isOrderModalOpen} 
+        onClose={() => setIsOrderModalOpen(false)} 
+        catalog={stats.catalog}
+        onSuccess={() => {
+          setIsOrderModalOpen(false);
+          loadStats();
+        }}
+      />
+      <StockAdjustmentModal 
+        isOpen={isStockModalOpen} 
+        onClose={() => setIsStockModalOpen(false)} 
+      />
     </>
   );
 }
