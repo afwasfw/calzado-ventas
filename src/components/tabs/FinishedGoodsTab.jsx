@@ -50,7 +50,7 @@ export default function FinishedGoodsTab() {
         {/* HEADER DEL ALMACÉN */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-white tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
               Almacén de Producto Terminado
             </h1>
             <p className="text-gray-400 mt-2 font-medium">
@@ -91,12 +91,12 @@ export default function FinishedGoodsTab() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#111] border-b border-[#333]">
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-gray-400 font-semibold">Código Industrial</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-gray-400 font-semibold">Color Físico</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-gray-400 font-semibold">Tipo de Taco</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-gray-400 font-semibold">Serie</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-[#25D366] font-semibold text-center">Stock (Docenas)</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-gray-400 font-semibold text-center">Acciones</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Código Industrial</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Color Físico</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Tipo de Taco</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Serie</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-[#25D366] font-semibold text-center">Stock (Docenas)</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#222]">

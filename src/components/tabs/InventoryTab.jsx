@@ -65,7 +65,7 @@ export default function InventoryTab() {
         {/* HEADER DEL INVENTARIO */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-white tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
               Inventario de Insumos
             </h1>
             <p className="text-gray-400 mt-2 font-medium">
@@ -133,11 +133,11 @@ export default function InventoryTab() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#111] border-b border-[#333]">
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-brand-gold font-semibold">Material / Insumo</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-brand-gold font-semibold">Categoría Asignada</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-brand-gold font-semibold text-right">Stock Actual</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-brand-gold font-semibold text-center">Estado</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest font-serif text-brand-gold font-semibold text-center">Acciones</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold">Material / Insumo</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold">Categoría Asignada</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-right">Stock Actual</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-center">Estado</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-center">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#222]">
@@ -205,14 +205,16 @@ export default function InventoryTab() {
             </table>
           </div>
           
-          {/* Footer de Tabla */}
-          <div className="bg-[#111] border-t border-[#333] p-4 flex justify-between items-center text-sm text-gray-500">
-            <p>Mostrando 5 de 5 insumos registrados</p>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222]">Anterior</button>
-              <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222]">Siguiente</button>
+          {/* Footer de Tabla Oculto si no hay data */}
+          {filteredInventory.length > 0 && (
+            <div className="bg-[#111] border-t border-[#333] p-4 flex justify-between items-center text-sm text-gray-500">
+              <p>Mostrando {filteredInventory.length} insumos registrados</p>
+              <div className="flex gap-2">
+                <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] opacity-50 cursor-not-allowed">Anterior</button>
+                <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] opacity-50 cursor-not-allowed">Siguiente</button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
         
       </div>

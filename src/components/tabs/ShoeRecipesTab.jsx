@@ -56,7 +56,7 @@ export default function ShoeRecipesTab() {
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <h1 className="text-3xl md:text-4xl font-serif font-bold text-white tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
               Fichas de Calzado (B.O.M)
             </h1>
             <p className="text-gray-400 mt-2 font-medium">
@@ -66,7 +66,7 @@ export default function ShoeRecipesTab() {
           
           <button 
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 bg-brand-peach hover:bg-[#e0755b] text-white font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(242,139,114,0.3)]"
+            className="flex items-center gap-2 bg-[#111] border border-brand-peach text-brand-peach hover:bg-brand-peach hover:text-black font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-[0_0_20px_rgba(242,139,114,0.15)]"
           >
             <Plus className="w-5 h-5" />
             Crear Nuevo Modelo

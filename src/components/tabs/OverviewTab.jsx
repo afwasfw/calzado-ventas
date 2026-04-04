@@ -1,18 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, TrendingDown, Settings, MessageCircle, ArrowRight } from 'lucide-react';
 import ManualOrderModal from '../modals/ManualOrderModal';
 import StockAdjustmentModal from '../modals/StockAdjustmentModal';
+import { supabase } from '../../lib/supabase';
 
 export default function OverviewTab({ session }) {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+
+  const [stats, setStats] = useState({
+    pendingOrders: 0,
+    criticalMaterials: 0,
+    totalModels: 0,
+    recentOrders: []
+  });
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        // Pedidos Pendientes
+        const { data: pedidos } = await supabase
+          .from('pedidos')
+          .select('*')
+          .eq('estado', 'Pendiente')
+          .order('created_at', { ascending: false });
+
+        // Materiales Críticos (stock_actual <= stock_alerta)
+        const { data: materiales } = await supabase
+          .from('inventario_materiales')
+          .select('*');
+        
+        const criticalCount = (materiales || []).filter(m => m.stock_actual <= m.stock_alerta).length;
+
+        // Total Modelos
+        const { count: modelsCount } = await supabase
+          .from('productos_finales')
+          .select('*', { count: 'exact', head: true });
+
+        setStats({
+          pendingOrders: pedidos?.length || 0,
+          criticalMaterials: criticalCount,
+          totalModels: modelsCount || 0,
+          recentOrders: pedidos?.slice(0, 5) || [] // Solo los 5 últimos para la bandeja
+        });
+
+      } catch (err) {
+        console.error('Error loading dashboard stats:', err);
+      }
+    }
+
+    loadStats();
+  }, []);
 
   return (
     <>
       <div className="max-w-7xl mx-auto px-6 py-8 md:py-12 animate-fade-in-up relative z-10">
         {/* HEADER DEL DASHBOARD */}
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-serif font-bold text-white tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
             Visión General
           </h1>
           <p className="text-gray-400 mt-2 font-medium">
@@ -29,18 +74,22 @@ export default function OverviewTab({ session }) {
               </div>
             </div>
             <p className="text-sm font-medium text-gray-400">Pedidos Sin Aprobar</p>
-            <h3 className="text-3xl font-sans font-extrabold text-white mt-1 uppercase tracking-tight">4 Nuevos</h3>
+            <h3 className="text-3xl font-sans font-extrabold text-white mt-1 uppercase tracking-tight">{stats.pendingOrders} Nuevos</h3>
           </div>
 
           <div className="bg-[#1a1a1a] border border-[#333] p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all shadow-green-500/5 group">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-green-950/40 rounded-xl text-green-500">
+              <div className={`p-3 rounded-xl ${stats.criticalMaterials > 0 ? 'bg-red-950/40 text-red-500' : 'bg-green-950/40 text-green-500'}`}>
                 <TrendingDown className="w-6 h-6" />
               </div>
             </div>
             <p className="text-sm font-medium text-gray-400">Alertas de Almacén</p>
-            <h3 className="text-3xl font-sans font-extrabold text-[#25D366] mt-1 uppercase tracking-tight">0 Insumos</h3>
-            <p className="text-xs text-green-500 mt-2 font-medium">✨ Stock Saludable</p>
+            <h3 className={`text-3xl font-sans font-extrabold mt-1 uppercase tracking-tight ${stats.criticalMaterials > 0 ? 'text-red-500' : 'text-[#25D366]'}`}>
+              {stats.criticalMaterials} Insumos
+            </h3>
+            <p className={`text-xs mt-2 font-medium ${stats.criticalMaterials > 0 ? 'text-red-500' : 'text-green-500'}`}>
+              {stats.criticalMaterials > 0 ? '⚠️ Revisar inventario' : '✨ Stock Saludable'}
+            </p>
           </div>
 
           <div className="bg-[#1a1a1a] border border-[#333] p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all shadow-brand-gold/5 group">
@@ -50,7 +99,7 @@ export default function OverviewTab({ session }) {
               </div>
             </div>
             <p className="text-sm font-medium text-gray-400">Fichas Técnicas Activas</p>
-            <h3 className="text-3xl font-sans font-extrabold text-white mt-1 uppercase tracking-tight">18 Modelos</h3>
+            <h3 className="text-3xl font-sans font-extrabold text-white mt-1 uppercase tracking-tight">{stats.totalModels} Modelos</h3>
           </div>
         </div>
 
@@ -68,33 +117,32 @@ export default function OverviewTab({ session }) {
             </div>
 
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-[#222]">
-                <div className="mb-3 sm:mb-0">
-                  <p className="font-semibold text-white flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
-                    Pedido Zapatos "Roma"
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">5 Docenas • Creado por: IA Bot</p>
+              {stats.recentOrders.length === 0 ? (
+                <div className="py-10 text-center border border-dashed border-[#333] rounded-xl">
+                  <p className="text-gray-500 font-medium">No hay pedidos pendientes en la bandeja.</p>
+                  <p className="text-xs text-gray-600 mt-1">El Bot de IA está a la espera de WhatsApps.</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button className="px-3 py-1.5 bg-[#222] hover:bg-red-950/50 hover:text-red-500 text-gray-400 text-xs font-bold rounded transition-colors border border-[#333]">
-                    Rechazar
-                  </button>
-                  <button className="px-3 py-1.5 bg-brand-gold/20 hover:bg-brand-gold text-brand-gold hover:text-black text-xs font-bold rounded transition-colors border border-brand-gold/50">
-                    Aprobar
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-[#222] opacity-60 hover:opacity-100 transition-opacity">
-                <div className="mb-3 sm:mb-0">
-                  <p className="font-semibold text-gray-200">Mocasín Ejecutivo (Negro)</p>
-                  <p className="text-xs text-gray-500 mt-1">2 Docenas • Creado por: Gerente</p>
-                </div>
-                <span className="px-4 py-1.5 bg-green-900/20 text-green-400 text-xs font-bold rounded-full border border-green-900/50">
-                  Fabricando
-                </span>
-              </div>
+              ) : (
+                stats.recentOrders.map((order) => (
+                  <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-[#222]">
+                    <div className="mb-3 sm:mb-0">
+                      <p className="font-semibold text-white flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-brand-gold animate-pulse"></span>
+                        Pedido de Cliente
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">{order.cantidad_docenas} Docenas • Chat: {order.cliente_whatsapp}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className="px-3 py-1.5 bg-[#222] hover:bg-red-950/50 hover:text-red-500 text-gray-400 text-xs font-bold rounded transition-colors border border-[#333]">
+                        Rechazar
+                      </button>
+                      <button className="px-3 py-1.5 bg-brand-gold/20 hover:bg-brand-gold text-brand-gold hover:text-black text-xs font-bold rounded transition-colors border border-brand-gold/50">
+                        Aprobar
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
