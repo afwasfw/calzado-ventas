@@ -8,6 +8,7 @@ export default function FinishedGoodsTab() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isBatchOpen, setIsBatchOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedGood, setSelectedGood] = useState(null);
   const [finishedGoods, setFinishedGoods] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -155,7 +156,7 @@ export default function FinishedGoodsTab() {
                             onClick={() => { setSelectedGood(item); setIsDetailsOpen(true); }}
                             className="flex items-center gap-2 p-2 px-4 text-sm font-bold text-brand-gold bg-brand-gold/10 hover:bg-brand-gold hover:text-black rounded-lg transition-colors border border-brand-gold/20"
                           >
-                            <Info className="w-4 h-4" />
+                            <Eye className="w-4 h-4" />
                             Detalles
                           </button>
                         </div>
@@ -169,8 +170,21 @@ export default function FinishedGoodsTab() {
         
       </div>
 
-      <NewBatchModal isOpen={isBatchOpen} onClose={() => setIsBatchOpen(false)} />
-      <FinishedGoodDetailsModal isOpen={isDetailsOpen} onClose={() => setIsDetailsOpen(false)} />
+      <NewBatchModal 
+        isOpen={isBatchOpen} 
+        onClose={() => setIsBatchOpen(false)} 
+        shoeDatabase={finishedGoods}
+        onSuccess={() => {
+          setIsBatchOpen(false);
+          fetchFinishedGoods();
+        }}
+      />
+      
+      <FinishedGoodDetailsModal 
+        isOpen={isDetailsOpen} 
+        onClose={() => setIsDetailsOpen(false)} 
+        goodData={selectedGood}
+      />
     </>
   );
 }
