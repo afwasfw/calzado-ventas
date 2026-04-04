@@ -21,7 +21,7 @@ export default function RecipeBOMModal({ isOpen, onClose, shoeData }) {
             <Beaker className="w-8 h-8" />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1 tracking-tight">Ficha Técnica de Fabricación</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">Ficha Técnica de Fabricación</h2>
             <div className="flex items-center gap-3">
               <span className="text-sm font-mono text-brand-peach bg-brand-peach/5 border border-brand-peach/20 px-2 py-0.5 rounded">{shoeData.code}</span>
               <p className="text-sm text-gray-400 font-medium">B.O.M Base Estándar (Bill Of Materials)</p>
@@ -36,7 +36,7 @@ export default function RecipeBOMModal({ isOpen, onClose, shoeData }) {
             <div className="aspect-square rounded-2xl border-4 border-[#222] overflow-hidden shadow-2xl relative group">
               <img src={shoeData.image} alt={shoeData.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-              <p className="absolute bottom-4 left-4 font-serif font-bold text-xl text-white drop-shadow-md">{shoeData.name}</p>
+              <p className="absolute bottom-4 left-4 font-bold text-xl text-white drop-shadow-md">{shoeData.name}</p>
             </div>
 
             <div className="bg-[#111] p-5 rounded-xl border border-[#222]">
@@ -73,9 +73,9 @@ export default function RecipeBOMModal({ isOpen, onClose, shoeData }) {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-[#151515] border-b border-[#222]">
-                      <th className="py-3 px-6 text-[10px] uppercase tracking-widest font-serif text-gray-400">Categoría</th>
-                      <th className="py-3 px-6 text-[10px] uppercase tracking-widest font-serif text-gray-400">Material Específico</th>
-                      <th className="py-3 px-6 text-[10px] uppercase tracking-widest font-serif text-gray-400 text-right">Cant. por Docena</th>
+                      <th className="py-3 px-6 text-[10px] uppercase tracking-widest text-gray-400">Categoría</th>
+                      <th className="py-3 px-6 text-[10px] uppercase tracking-widest text-gray-400">Material Específico</th>
+                      <th className="py-3 px-6 text-[10px] uppercase tracking-widest text-gray-400 text-right">Cant. por Docena</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#222]">

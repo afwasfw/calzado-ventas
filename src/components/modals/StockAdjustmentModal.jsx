@@ -14,8 +14,8 @@ export default function StockAdjustmentModal({ isOpen, onClose }) {
           <X className="w-6 h-6" />
         </button>
         
-        <h2 className="text-2xl font-serif font-bold text-white mb-1">Ajuste / Ingreso de Stock</h2>
-        <p className="text-sm text-gray-400 mb-8">Registra llegadas de material o reporta mermas y pérdidas.</p>
+        <h2 className="text-2xl font-bold text-white mb-1">Ajuste / Ingreso de Stock</h2>
+        <p className="text-sm text-gray-400 mb-8">Registra ingresos de proveedores o mermas operativas.</p>
 
         <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); onClose(); }}>
           
@@ -50,9 +50,9 @@ export default function StockAdjustmentModal({ isOpen, onClose }) {
           </div>
 
           <div className="pt-4">
-            <button type="submit" className="w-full flex justify-center items-center gap-2 bg-white hover:bg-gray-200 text-black font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-              <ArrowDownRight className="w-5 h-5" />
-              Impactar en Inventario Real
+            <button type="submit" className="px-6 py-3 bg-brand-gold hover:bg-[#c2a15c] text-black rounded-xl font-bold shadow-none transition-transform active:scale-95 flex items-center gap-2">
+              <Save className="w-5 h-5" />
+              Aplicar Movimiento
             </button>
           </div>
         </form>

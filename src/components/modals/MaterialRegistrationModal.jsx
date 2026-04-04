@@ -14,7 +14,7 @@ export default function MaterialRegistrationModal({ isOpen, onClose }) {
           <X className="w-6 h-6" />
         </button>
         
-        <h2 className="text-2xl font-serif font-bold text-white mb-1">Nuevo Insumo</h2>
+        <h2 className="text-2xl font-bold text-white mb-1">Nuevo Insumo</h2>
         <p className="text-sm text-gray-400 mb-8">Añade un nuevo tipo de material al catálogo oficial de la fábrica.</p>
 
         <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); onClose(); }}>

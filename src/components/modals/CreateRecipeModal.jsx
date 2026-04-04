@@ -33,7 +33,7 @@ export default function CreateRecipeModal({ isOpen, onClose }) {
             <Plus className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1 tracking-tight">Nuevo Modelo Maestro</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">Nuevo Modelo Maestro</h2>
             <p className="text-sm text-gray-400">Diseña la receta base (Plantilla) para calcular consumos automáticos.</p>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function CreateRecipeModal({ isOpen, onClose }) {
             <button type="button" onClick={onClose} className="px-6 py-3 border border-[#333] text-gray-300 rounded-xl hover:bg-[#222] transition-colors font-medium">
               Cancelar
             </button>
-            <button type="submit" className="flex items-center gap-2 bg-brand-peach hover:bg-[#e0755b] text-white font-bold py-3 px-8 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(242,139,114,0.3)]">
+            <button type="submit" className="flex items-center gap-2 bg-[#d86145] hover:bg-[#c25035] text-white font-bold py-3 px-8 rounded-xl transition-transform active:scale-95 shadow-none">
               <Save className="w-5 h-5" />
               Guardar Nuevo Modelo
             </button>

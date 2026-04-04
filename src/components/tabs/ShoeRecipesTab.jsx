@@ -66,7 +66,7 @@ export default function ShoeRecipesTab() {
           
           <button 
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 bg-[#111] border border-brand-peach text-brand-peach hover:bg-brand-peach hover:text-black font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-[0_0_20px_rgba(242,139,114,0.15)]"
+            className="flex items-center gap-2 bg-[#d86145] hover:bg-[#c25035] text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-none"
           >
             <Plus className="w-5 h-5" />
             Crear Nuevo Modelo

@@ -23,7 +23,7 @@ export default function FinishedGoodDetailsModal({ isOpen, onClose }) {
             <Tag className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl font-serif font-bold text-white mb-1 tracking-tight">Detalles de Almacén</h2>
+            <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Detalles de Almacén</h2>
             <p className="text-sm text-gray-400">Expediente del Modelo Comercial Físico.</p>
           </div>
         </div>

@@ -14,8 +14,8 @@ export default function NewBatchModal({ isOpen, onClose }) {
           <X className="w-6 h-6" />
         </button>
         
-        <h2 className="text-2xl font-serif font-bold text-white mb-1">Ingresar Lote Terminado</h2>
-        <p className="text-sm text-gray-400 mb-8">Registra las docenas recién fabricadas para pasarlas a Stock de Ventas.</p>
+        <h2 className="text-2xl font-bold text-white mb-1">Ingresar Lote Terminado</h2>
+        <p className="text-sm text-gray-400 mb-8">Registra producción recién salida de la línea de ensambilaje.</p>
 
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onClose(); }}>
           
@@ -56,9 +56,9 @@ export default function NewBatchModal({ isOpen, onClose }) {
           </div>
 
           <div className="pt-4">
-            <button type="submit" className="w-full flex justify-center items-center gap-2 bg-[#25D366] hover:bg-[#20b858] text-black font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(37,211,102,0.2)]">
-              <PackageCheck className="w-5 h-5" />
-              Ingresar al Almacén Físico
+            <button type="submit" className="w-full flex justify-center items-center gap-2 bg-[#25D366] hover:bg-[#20b858] text-black font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-none">
+              <Save className="w-5 h-5" />
+              Ingresar al Almacén
             </button>
           </div>
         </form>

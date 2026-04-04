@@ -63,7 +63,7 @@ export default function CategoryManagerModal({ isOpen, onClose, categories, setC
             <ListTree className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-2xl font-serif font-bold text-white mb-1 tracking-tight">Administrador de Categorías</h2>
+            <h2 className="text-2xl font-bold text-white mb-1 tracking-tight">Administrador de Categorías</h2>
             <p className="text-sm text-gray-400">Edita, elimina o agrega nuevas carpetas de clasificación al almacén.</p>
           </div>
         </div>
@@ -75,8 +75,8 @@ export default function CategoryManagerModal({ isOpen, onClose, categories, setC
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#111] border-b border-[#333]">
-                    <th className="py-3 px-6 text-xs uppercase tracking-widest font-serif text-brand-gold font-semibold">Nombre de Categoría Oficial</th>
-                    <th className="py-3 px-6 text-xs uppercase tracking-widest font-serif text-brand-gold font-semibold text-center w-32">Acciones</th>
+                    <th className="py-3 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold">Nombre de Categoría Oficial</th>
+                    <th className="py-3 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-center w-32">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#222] max-h-80 overflow-y-auto block w-full table-fixed table-layout" style={{ display: 'table-row-group' }}>
