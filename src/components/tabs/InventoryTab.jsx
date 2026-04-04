@@ -5,6 +5,7 @@ import StockAdjustmentModal from '../modals/StockAdjustmentModal';
 import CategoryManagerModal from '../modals/CategoryManagerModal';
 import UnitManagerModal from '../modals/UnitManagerModal';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
 
 export default function InventoryTab() {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
@@ -66,6 +67,44 @@ export default function InventoryTab() {
   useEffect(() => {
     fetchInventoryAndCategories();
   }, []);
+
+  const deleteInsumo = async (id, nombre) => {
+    setActiveDropdown(null);
+    toast((t) => (
+      <div className="flex flex-col gap-4 p-2 bg-[#1a1a1a]">
+        <p className="text-white font-medium text-sm">
+          ¿Eliminar definitivamente el insumo <strong className="text-brand-gold">{nombre}</strong>?
+          <br /><br />
+          <span className="text-gray-400 text-xs">Esta acción no se puede deshacer y borrará su historial de stock.</span>
+        </p>
+        <div className="flex justify-end gap-2 mt-2">
+          <button 
+            className="px-3 py-1.5 text-gray-400 hover:text-white border border-[#333] rounded text-sm min-w-20"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancelar
+          </button>
+          <button 
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded font-bold text-sm min-w-20"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                const { error } = await supabase.from('inventario_materiales').delete().eq('id', id);
+                if (error) throw error;
+                setInventory(inventory.filter(item => item.id !== id));
+                toast.success('Insumo eliminado del almacén');
+              } catch (err) {
+                console.error('Error al borrar insumo:', err.message);
+                toast.error('No se pudo eliminar el insumo.');
+              }
+            }}
+          >
+            Sí, Eliminar
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity, style: { background: '#1a1a1a', padding: 0 } });
+  };
 
   const getStatusStyle = (stock_actual, stock_alerta) => {
     if (stock_actual > stock_alerta * 2) return 'bg-green-950/30 text-green-500 border-green-900/50';
@@ -222,10 +261,13 @@ export default function InventoryTab() {
                             <button onClick={() => setIsAdjustmentOpen(true)} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]">
                               Ajustar Stock Manual
                             </button>
-                            <button className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]">
+                            <button onClick={() => setIsAdjustmentOpen(true)} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]">
                               Auditar Movimientos
                             </button>
-                            <button className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors">
+                            <button 
+                              onClick={() => deleteInsumo(item.id, item.nombre)}
+                              className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+                            >
                               Eliminar Insumo
                             </button>
                           </div>

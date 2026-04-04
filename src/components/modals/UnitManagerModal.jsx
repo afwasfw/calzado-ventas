@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Scale, Edit2, Trash2, Plus, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
 
 export default function UnitManagerModal({ isOpen, onClose, units, setUnits }) {
   const [isAddMode, setIsAddMode] = useState(false);
@@ -32,8 +33,10 @@ export default function UnitManagerModal({ isOpen, onClose, units, setUnits }) {
         setUnits([...units, unitName]);
         setNewUnitName('');
         setIsAddMode(false);
+        toast.success(`Unidad '${unitName}' creada.`);
       } catch (err) {
         console.error('Error al guardar unidad:', err.message);
+        toast.error('Ocurrió un error al intentar guardar la unidad.');
       } finally {
         setIsSaving(false);
       }
@@ -52,8 +55,10 @@ export default function UnitManagerModal({ isOpen, onClose, units, setUnits }) {
         const updated = [...units];
         updated[idx] = newName;
         setUnits(updated);
+        toast.success(`Renombrado a '${newName}'.`);
       } catch (err) {
         console.error('Error al modificar unidad:', err.message);
+        toast.error('No se pudo renombrar la unidad.');
       } finally {
         setIsSaving(false);
       }
@@ -63,17 +68,40 @@ export default function UnitManagerModal({ isOpen, onClose, units, setUnits }) {
 
   // Eliminar
   const handleDelete = async (idx) => {
-    if (window.confirm("¿Seguro que deseas eliminar esta unidad maestra? Si en el inventario hay registros usándola, no se calcularán correctamente.")) {
-      try {
-        const unitName = units[idx];
-        const { error } = await supabase.from('unidades_medida').delete().eq('nombre', unitName);
-        if (error) throw error;
-        const updated = units.filter((_, i) => i !== idx);
-        setUnits(updated);
-      } catch (err) {
-        console.error('Error al borrar unidad:', err.message);
-      }
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-4 p-2 bg-[#1a1a1a]">
+        <p className="text-white font-medium">
+          ¿Seguro que deseas eliminar esta unidad maestra? Si en el inventario hay registros usándola, no se calcularán correctamente.
+        </p>
+        <div className="flex justify-end gap-2 mt-2">
+          <button 
+            className="px-3 py-1.5 text-gray-400 hover:text-white border border-[#333] rounded"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancelar
+          </button>
+          <button 
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded font-bold"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                const unitName = units[idx];
+                const { error } = await supabase.from('unidades_medida').delete().eq('nombre', unitName);
+                if (error) throw error;
+                const updated = units.filter((_, i) => i !== idx);
+                setUnits(updated);
+                toast.success('Unidad eliminada');
+              } catch (err) {
+                console.error('Error al borrar unidad:', err.message);
+                toast.error('No se pudo eliminar la unidad.');
+              }
+            }}
+          >
+            Sí, eliminar
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity, style: { background: '#1a1a1a', padding: 0 } });
   };
 
   return (

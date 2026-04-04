@@ -3,6 +3,8 @@ import { supabase } from './lib/supabase';
 import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import DashboardLayout from './components/DashboardLayout';
 
+import { Toaster } from 'react-hot-toast';
+
 function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -64,7 +66,12 @@ function App() {
   // PANTALLA 1: DASHBOARD (Si está logueado)
   // ==========================================
   if (session) {
-    return <DashboardLayout session={session} handleLogout={handleLogout} />;
+    return (
+      <>
+        <Toaster position="top-right" toastOptions={{ style: { background: '#111', color: '#fff', border: '1px solid #333' } }} />
+        <DashboardLayout session={session} handleLogout={handleLogout} />
+      </>
+    );
   }
 
   // ==========================================

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, ListTree, Edit2, Trash2, Plus, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
 
 export default function CategoryManagerModal({ isOpen, onClose, categories, setCategories }) {
   const [isAddMode, setIsAddMode] = useState(false);
@@ -32,8 +33,10 @@ export default function CategoryManagerModal({ isOpen, onClose, categories, setC
         setCategories([...categories, catName]);
         setNewCatName('');
         setIsAddMode(false);
+        toast.success(`Categoría '${catName}' creada.`);
       } catch (err) {
         console.error('Error al guardar:', err.message);
+        toast.error('Ocurrió un error al intentar guardar la categoría.');
       } finally {
         setIsSaving(false);
       }
@@ -52,8 +55,10 @@ export default function CategoryManagerModal({ isOpen, onClose, categories, setC
         const updated = [...categories];
         updated[idx] = newName;
         setCategories(updated);
+        toast.success(`Renombrado a '${newName}'.`);
       } catch (err) {
         console.error('Error al modificar:', err.message);
+        toast.error('No se pudo renombrar la categoría.');
       } finally {
         setIsSaving(false);
       }
@@ -63,17 +68,40 @@ export default function CategoryManagerModal({ isOpen, onClose, categories, setC
 
   // Eliminar
   const handleDelete = async (idx) => {
-    if (window.confirm("¿Seguro que deseas eliminar esta categoría? Los insumos que estén bajo ella podrían quedar sin filtro correcto.")) {
-      try {
-        const catName = categories[idx];
-        const { error } = await supabase.from('categorias_insumos').delete().eq('nombre', catName);
-        if (error) throw error;
-        const updated = categories.filter((_, i) => i !== idx);
-        setCategories(updated);
-      } catch (err) {
-        console.error('Error al borrar:', err.message);
-      }
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-4 p-2 bg-[#1a1a1a]">
+        <p className="text-white font-medium">
+          ¿Seguro que deseas eliminar esta categoría? Los insumos que estén bajo ella podrían quedar sin filtro correcto.
+        </p>
+        <div className="flex justify-end gap-2 mt-2">
+          <button 
+            className="px-3 py-1.5 text-gray-400 hover:text-white border border-[#333] rounded"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancelar
+          </button>
+          <button 
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded font-bold"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                const catName = categories[idx];
+                const { error } = await supabase.from('categorias_insumos').delete().eq('nombre', catName);
+                if (error) throw error;
+                const updated = categories.filter((_, i) => i !== idx);
+                setCategories(updated);
+                toast.success('Categoría eliminada');
+              } catch (err) {
+                console.error('Error al borrar:', err.message);
+                toast.error('No se pudo eliminar la categoría.');
+              }
+            }}
+          >
+            Sí, eliminar
+          </button>
+        </div>
+      </div>
+    ), { duration: Infinity, style: { background: '#1a1a1a', padding: 0 } });
   };
 
   return (

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
 
 export default function MaterialRegistrationModal({ isOpen, onClose, onSuccess, categories = [], units = [] }) {
   const [formData, setFormData] = useState({
@@ -17,7 +18,7 @@ export default function MaterialRegistrationModal({ isOpen, onClose, onSuccess, 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nombre || !formData.categoria || !formData.unidad_medida) {
-      alert("Por favor llena los campos obligatorios (Nombre, Categoría, Medida)");
+      toast.error("Llena los campos obligatorios: Nombre, Categoría y Medida");
       return;
     }
 
@@ -39,12 +40,14 @@ export default function MaterialRegistrationModal({ isOpen, onClose, onSuccess, 
       
       // Limpiar y cerrar exitosamente
       setFormData({ nombre: '', categoria: '', unidad_medida: '', stock_alerta: '', detalles: '' });
+      toast.success("Insumo registrado correctamente en el almacén.");
+      
       if (onSuccess) onSuccess();
       else onClose();
 
     } catch (err) {
       console.error('Error insertando material:', err.message);
-      alert("Ocurrió un error al guardar. Revisa la consola.");
+      toast.error("Ocurrió un error al guardar. Revisa la consola.");
     } finally {
       setIsSubmitting(false);
     }
