@@ -8,6 +8,7 @@ export default function MaterialRegistrationModal({ isOpen, onClose, onSuccess, 
     nombre: '',
     categoria: '',
     unidad_medida: '',
+    stock_actual: '',
     stock_alerta: '',
     detalles: ''
   });
@@ -31,7 +32,7 @@ export default function MaterialRegistrationModal({ isOpen, onClose, onSuccess, 
           nombre: formData.nombre,
           categoria: formData.categoria,
           unidad_medida: formData.unidad_medida,
-          stock_actual: 0, // Inicia en 0, luego se ajusta
+          stock_actual: parseFloat(formData.stock_actual) || 0,
           stock_alerta: parseInt(formData.stock_alerta) || 5, // 5 por defecto si está vacío
           detalles_proveedor: formData.detalles
         }]);
@@ -39,7 +40,7 @@ export default function MaterialRegistrationModal({ isOpen, onClose, onSuccess, 
       if (error) throw error;
       
       // Limpiar y cerrar exitosamente
-      setFormData({ nombre: '', categoria: '', unidad_medida: '', stock_alerta: '', detalles: '' });
+      setFormData({ nombre: '', categoria: '', unidad_medida: '', stock_actual: '', stock_alerta: '', detalles: '' });
       toast.success("Insumo registrado correctamente en el almacén.");
       
       if (onSuccess) onSuccess();
@@ -107,15 +108,28 @@ export default function MaterialRegistrationModal({ isOpen, onClose, onSuccess, 
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Punto de Alerta Crítica (Stock Mínimo)</label>
-            <input 
-              type="number" 
-              value={formData.stock_alerta}
-              onChange={(e) => setFormData({...formData, stock_alerta: e.target.value})}
-              className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 transition-colors" 
-              placeholder="Indicar stock mínimo permitido..." 
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Stock / Cantidad Inicial</label>
+              <input 
+                type="number" 
+                step="any"
+                value={formData.stock_actual}
+                onChange={(e) => setFormData({...formData, stock_actual: e.target.value})}
+                className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-brand-gold font-mono focus:outline-none focus:border-brand-gold transition-colors" 
+                placeholder="Ej. 150" 
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Alerta Crítica (Mínimo)</label>
+              <input 
+                type="number" 
+                value={formData.stock_alerta}
+                onChange={(e) => setFormData({...formData, stock_alerta: e.target.value})}
+                className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-red-500 font-mono focus:outline-none focus:border-red-500 transition-colors" 
+                placeholder="Punto de alerta..." 
+              />
+            </div>
           </div>
 
           <div>
