@@ -264,8 +264,11 @@ export default function InventoryTab() {
                             >
                               Ajustar Stock Manual
                             </button>
-                            <button className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]">
-                              Auditar Movimientos
+                            <button 
+                              onClick={() => toast('El historial de cambios de insumos estará disponible pronto.', { icon: '🚧' })}
+                              className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]"
+                            >
+                              Ver Historial de Cambios
                             </button>
                             <button 
                               onClick={() => deleteInsumo(item.id, item.nombre)}
