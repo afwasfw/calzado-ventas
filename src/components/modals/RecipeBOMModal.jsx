@@ -36,7 +36,7 @@ export default function RecipeBOMModal({ isOpen, onClose, shoeData, onDelete }) 
           {/* COLUMNA IZQUIERDA: RESUMEN Y FOTO */}
           <div className="lg:col-span-1 space-y-6">
             <div className="aspect-square rounded-2xl border-4 border-[#222] overflow-hidden shadow-2xl relative group">
-              <img src={shoeData.image} alt={shoeData.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+              <img src={shoeData.foto_url || '/shoepics/mocasin.png'} alt={shoeData.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
               <p className="absolute bottom-4 left-4 font-bold text-xl text-white drop-shadow-md">{shoeData.name}</p>
             </div>
