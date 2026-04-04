@@ -50,20 +50,40 @@ export default function ShoeRecipesTab() {
         setMaterials(matData);
       }
 
-      // Traer zapatos
+      // Traer zapatos con sus respectivas recetas y los materiales vinculados
       const { data, error } = await supabase
         .from('productos_finales')
-        .select('*')
+        .select(`
+          *,
+          recetas_produccion (
+            cantidad_por_docena,
+            inventario_materiales (
+              nombre,
+              categoria,
+              unidad_medida
+            )
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      const adaptedData = (data || []).map(item => ({
-        ...item,
-        name: item.nombre,
-        precio: item.precio_docena_mayorista,
-        recipe: [] 
-      }));
+      const adaptedData = (data || []).map(item => {
+        // Formatear recetas anidadas
+        const mappedRecipe = (item.recetas_produccion || []).map(r => ({
+          category: r.inventario_materiales?.categoria || 'Sin categoría',
+          material: r.inventario_materiales?.nombre || 'Material eliminado',
+          amount: r.cantidad_por_docena,
+          unit: r.inventario_materiales?.unidad_medida || ''
+        }));
+
+        return {
+          ...item,
+          name: item.nombre,
+          precio: item.precio_docena_mayorista,
+          recipe: mappedRecipe
+        };
+      });
       
       setShoeDatabase(adaptedData);
     } catch (error) {
