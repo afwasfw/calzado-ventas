@@ -253,7 +253,16 @@ export default function InventoryTab() {
       </div>
 
       {/* RENDERIZADO CONDICIONAL DE LOS MODALES */}
-      <MaterialRegistrationModal isOpen={isRegistrationOpen} onClose={() => setIsRegistrationOpen(false)} categories={categories} units={units} />
+      <MaterialRegistrationModal 
+        isOpen={isRegistrationOpen} 
+        onClose={() => setIsRegistrationOpen(false)} 
+        onSuccess={() => {
+          setIsRegistrationOpen(false);
+          fetchInventoryAndCategories();
+        }}
+        categories={categories} 
+        units={units} 
+      />
       <StockAdjustmentModal isOpen={isAdjustmentOpen} onClose={() => setIsAdjustmentOpen(false)} />
       
       <CategoryManagerModal 
