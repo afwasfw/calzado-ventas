@@ -1,7 +1,9 @@
-import React from 'react';
-import { X, Beaker, FileBox, Calculator } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Beaker, FileBox, Calculator, Trash2 } from 'lucide-react';
 
-export default function RecipeBOMModal({ isOpen, onClose, shoeData }) {
+export default function RecipeBOMModal({ isOpen, onClose, shoeData, onDelete }) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
   if (!isOpen || !shoeData) return null;
 
   return (
@@ -111,11 +113,25 @@ export default function RecipeBOMModal({ isOpen, onClose, shoeData }) {
               </p>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
-              <button className="px-5 py-2.5 text-sm font-bold text-gray-400 hover:text-white transition-colors">
-                Imprimir Ficha (PDF)
+            <div className="mt-6 flex justify-end gap-3 items-center">
+              <button 
+                onClick={async () => {
+                   if(window.confirm(`¿Seguro que deseas eliminar permanentemente el modelo ${shoeData.code}?`)) {
+                     setIsDeleting(true);
+                     await onDelete(shoeData.id);
+                     setIsDeleting(false);
+                   }
+                }}
+                disabled={isDeleting}
+                className="px-5 py-2.5 text-sm font-bold text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? 'Borrando...' : 'Eliminar Receta'}
               </button>
-              <button className="px-6 py-2.5 bg-brand-gold hover:bg-[#c2a15c] text-black font-bold rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(212,178,113,0.3)]">
+              <button 
+                onClick={() => alert("La edición de recetas estará disponible en la próxima actualización.")}
+                className="px-6 py-2.5 bg-brand-gold hover:bg-[#c2a15c] text-black font-bold rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(212,178,113,0.3)]"
+              >
                 Modificar Receta
               </button>
             </div>

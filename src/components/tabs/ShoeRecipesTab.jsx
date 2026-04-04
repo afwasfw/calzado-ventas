@@ -3,6 +3,7 @@ import { Search, Info, Plus } from 'lucide-react';
 import RecipeBOMModal from '../modals/RecipeBOMModal';
 import CreateRecipeModal from '../modals/CreateRecipeModal';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
 
 export default function ShoeRecipesTab() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -176,6 +177,18 @@ export default function ShoeRecipesTab() {
         isOpen={selectedShoe !== null} 
         onClose={() => setSelectedShoe(null)} 
         shoeData={selectedShoe}
+        onDelete={async (id) => {
+          try {
+            const { error } = await supabase.from('productos_finales').delete().eq('id', id);
+            if (error) throw error;
+            toast.success('Modelo y su receta eliminada del catálogo.');
+            setSelectedShoe(null);
+            fetchRecipesAndCategories();
+          } catch(err) {
+            console.error('Error deleting:', err.message);
+            toast.error('Error al borrar. Si el producto tiene stock o historial, no podrás borrarlo.');
+          }
+        }}
       />
       {/* Renderizado condicional del Modal de Creación */}
       <CreateRecipeModal 

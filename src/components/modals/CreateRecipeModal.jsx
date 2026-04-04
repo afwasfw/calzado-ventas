@@ -42,6 +42,7 @@ export default function CreateRecipeModal({ isOpen, onClose, categories = [], un
     updated[idx].name = newMaterialName;
     if (selectedMat) {
       updated[idx].unit = selectedMat.unidad_medida; // Auto-assign the correct unit!
+      updated[idx].category = selectedMat.categoria; // Auto-assign the correct category!
     }
     setIngredients(updated);
   };
