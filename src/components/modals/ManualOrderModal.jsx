@@ -146,7 +146,7 @@ export default function ManualOrderModal({ isOpen, onClose, catalog = [], onSucc
               className="w-full flex justify-center items-center gap-2 bg-brand-gold hover:bg-[#c2a15c] text-black font-bold py-4 rounded-xl transition-transform active:scale-95 shadow-[0_0_15px_rgba(212,178,113,0.2)] disabled:opacity-50"
             >
               <Send className="w-5 h-5" />
-              {isSubmitting ? 'Lanzando Pedido...' : 'Lanzar Producción Múltiple'}
+              {isSubmitting ? 'Lanzando Pedido...' : 'Crear Pedido'}
             </button>
           </div>
         </form>
