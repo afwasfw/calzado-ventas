@@ -9,10 +9,10 @@ export default function ShoeRecipesTab() {
   const [selectedShoe, setSelectedShoe] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Datos reales en lugar de mocks
   const [shoeDatabase, setShoeDatabase] = useState([]);
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
+  const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchRecipesAndCategories = async () => {
@@ -37,6 +37,16 @@ export default function ShoeRecipesTab() {
 
       if (!unitError && unitData) {
         setUnits(unitData.map(u => u.nombre));
+      }
+
+      // Traer inventario_materiales
+      const { data: matData, error: matError } = await supabase
+        .from('inventario_materiales')
+        .select('id, nombre, categoria, unidad_medida')
+        .order('nombre', { ascending: true });
+
+      if (!matError && matData) {
+        setMaterials(matData);
       }
 
       // Traer zapatos
@@ -173,6 +183,7 @@ export default function ShoeRecipesTab() {
         onClose={() => setIsCreateModalOpen(false)} 
         categories={categories}
         units={units}
+        materials={materials}
       />
     </>
   );

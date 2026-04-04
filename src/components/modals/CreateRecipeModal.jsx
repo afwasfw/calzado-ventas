@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save, Plus, Trash2, Beaker } from 'lucide-react';
 
-export default function CreateRecipeModal({ isOpen, onClose, categories = [], units = [] }) {
+export default function CreateRecipeModal({ isOpen, onClose, categories = [], units = [], materials = [] }) {
   // Estado local para simular la lista de ingredientes dinámicos
   const [ingredients, setIngredients] = useState([
     { category: '', name: '', amount: '', unit: '' }
@@ -15,6 +15,30 @@ export default function CreateRecipeModal({ isOpen, onClose, categories = [], un
 
   const removeIngredientRow = (idx) => {
     setIngredients(ingredients.filter((_, i) => i !== idx));
+  };
+
+  const handleCategoryChange = (idx, newCategory) => {
+    const updated = [...ingredients];
+    updated[idx].category = newCategory;
+    updated[idx].name = ''; // Reset the sub-insumo when category changes
+    updated[idx].unit = ''; // Reset the unit when category changes
+    setIngredients(updated);
+  };
+
+  const handleMaterialChange = (idx, newMaterialName) => {
+    const updated = [...ingredients];
+    const selectedMat = materials.find(m => m.nombre === newMaterialName);
+    updated[idx].name = newMaterialName;
+    if (selectedMat) {
+      updated[idx].unit = selectedMat.unidad_medida; // Auto-assign the correct unit!
+    }
+    setIngredients(updated);
+  };
+
+  const updateIngredient = (idx, field, value) => {
+    const updated = [...ingredients];
+    updated[idx][field] = value;
+    setIngredients(updated);
   };
 
   return (
@@ -80,31 +104,63 @@ export default function CreateRecipeModal({ isOpen, onClose, categories = [], un
             </div>
 
             <div className="p-4 space-y-3">
-              {ingredients.map((ing, idx) => (
-                <div key={idx} className="flex gap-2 items-center">
-                  <select className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-gray-300 focus:border-brand-peach outline-none">
-                    <option value="">Categoría...</option>
-                    {categories.map((cat, catIdx) => (
-                      <option key={catIdx} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  
-                  <input type="text" className="flex-[4] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-white focus:border-brand-peach outline-none" placeholder="Sub-Insumo (Ej. Cuero Variable)" />
-                  
-                  <input type="number" className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-brand-gold font-mono focus:border-brand-peach outline-none" placeholder="Cant." />
-                  
-                  <select className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-gray-300 focus:border-brand-peach outline-none">
-                    <option value="">Medida...</option>
-                    {units.map((unit, unitIdx) => (
-                      <option key={unitIdx} value={unit}>{unit}</option>
-                    ))}
-                  </select>
+              {ingredients.map((ing, idx) => {
+                const availableMaterials = ing.category 
+                  ? materials.filter(m => m.categoria === ing.category)
+                  : materials;
 
-                  <button type="button" onClick={() => removeIngredientRow(idx)} className="p-2 text-gray-600 hover:text-red-500 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+                return (
+                  <div key={idx} className="flex gap-2 items-center">
+                    {/* CATEGORY SELECTOR */}
+                    <select 
+                      value={ing.category}
+                      onChange={(e) => handleCategoryChange(idx, e.target.value)}
+                      className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-gray-300 focus:border-brand-peach outline-none"
+                    >
+                      <option value="">Categoría...</option>
+                      {categories.map((cat, catIdx) => (
+                        <option key={catIdx} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    
+                    {/* MATERIAL / SUB-INSUMO SELECTOR (NOW DYNAMIC) */}
+                    <select 
+                      value={ing.name}
+                      onChange={(e) => handleMaterialChange(idx, e.target.value)}
+                      className={`flex-[3] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm focus:border-brand-peach outline-none ${ing.name ? 'text-white' : 'text-gray-500'}`}
+                    >
+                      <option value="">Insumo del Almacén...</option>
+                      {availableMaterials.map(m => (
+                        <option key={m.id} value={m.nombre}>{m.nombre}</option>
+                      ))}
+                    </select>
+                    
+                    <input 
+                      type="number" 
+                      step="any"
+                      value={ing.amount}
+                      onChange={(e) => updateIngredient(idx, 'amount', e.target.value)}
+                      className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-brand-gold font-mono focus:border-brand-peach outline-none" 
+                      placeholder="Cant." 
+                    />
+                    
+                    <select 
+                      value={ing.unit}
+                      onChange={(e) => updateIngredient(idx, 'unit', e.target.value)}
+                      className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-gray-300 focus:border-brand-peach outline-none appearance-none"
+                    >
+                      <option value="">Medida...</option>
+                      {units.map((unit, unitIdx) => (
+                        <option key={unitIdx} value={unit}>{unit}</option>
+                      ))}
+                    </select>
+
+                    <button type="button" onClick={() => removeIngredientRow(idx)} className="p-2 text-gray-600 hover:text-red-500 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                );
+              })}
               
               {ingredients.length === 0 && (
                  <p className="text-center text-sm text-gray-600 py-4">No hay materiales en la receta. Agrega una fila.</p>
