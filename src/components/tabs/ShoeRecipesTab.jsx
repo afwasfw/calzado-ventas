@@ -147,7 +147,7 @@ export default function ShoeRecipesTab() {
                   </div>
                   
                   <img 
-                    src={shoe.image || '/shoepics/mocasin.png'} 
+                    src={shoe.foto_url || '/shoepics/mocasin.png'} 
                     alt={shoe.name} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100 mix-blend-luminosity hover:mix-blend-normal"
                   />
@@ -184,6 +184,10 @@ export default function ShoeRecipesTab() {
         categories={categories}
         units={units}
         materials={materials}
+        onSuccess={() => {
+          setIsCreateModalOpen(false);
+          fetchRecipesAndCategories();
+        }}
       />
     </>
   );
