@@ -1,129 +1,187 @@
 import React, { useState, useEffect } from 'react';
-import Dashboard from './components/Dashboard';
-import Inventory from './components/Inventory';
-import { LayoutDashboard, Package, Footprints, ClipboardList, Menu, X, Moon, Sun } from 'lucide-react';
+import { supabase } from './lib/supabase';
+import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import DashboardLayout from './components/DashboardLayout';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' || 
-        (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    }
-    return false;
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [session, setSession] = useState(null);
+  
+  // Posición del cursor para el brillo (Linterna magica)
+  const [mousePosition, setMousePosition] = useState({ x: -1000, y: -1000 });
 
+  // 1. Manejo del Tema Oscuro (Estético)
   useEffect(() => {
-    if (isDarkMode) {
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
     }
-  }, [isDarkMode]);
+  }, []);
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'inventory', label: 'Inventario', icon: Package },
-  ];
+  // 2. Verificar si ya hay una sesión iniciada al cargar la página
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
 
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 3. Función real de Login con Supabase
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMsg('Credenciales incorrectas. Verifique e intente nuevamente.');
+    }
+    setLoading(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const handleMouseMove = (e) => {
+    setMousePosition({ x: e.clientX, y: e.clientY });
+  };
+
+  // ==========================================
+  // PANTALLA 1: DASHBOARD (Si está logueado)
+  // ==========================================
+  if (session) {
+    return <DashboardLayout session={session} handleLogout={handleLogout} />;
+  }
+
+  // ==========================================
+  // PANTALLA 2: LOGIN (Si NO está logueado)
+  // ==========================================
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
-      {/* Sidebar (Desktop) / Header (Mobile) */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-industrial-blue dark:bg-gray-950 text-white transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="p-6 flex flex-col h-full border-r border-transparent dark:border-gray-800">
-          <div className="flex items-center gap-3 mb-10">
-            <Footprints size={32} className="text-blue-300" />
-            <div>
-              <h1 className="text-xl font-black uppercase tracking-tighter m-0 leading-none">
-                Calzado S.A.
-              </h1>
-              <p className="text-[10px] text-blue-200 uppercase tracking-widest mt-1">
-                Industrial System
-              </p>
-            </div>
-          </div>
-
-          <nav className="flex-1 space-y-2">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setIsSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  activeTab === item.id 
-                  ? 'bg-blue-800 dark:bg-gray-800 text-white' 
-                  : 'text-blue-100 hover:bg-blue-800/50 dark:hover:bg-gray-800/50'
-                }`}
-              >
-                <item.icon size={20} />
-                <span className="font-semibold">{item.label}</span>
-              </button>
-            ))}
-            
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-blue-300/50 dark:text-gray-600 cursor-not-allowed" disabled>
-              <ClipboardList size={20} />
-              <span className="font-semibold">Reportes</span>
-            </button>
-          </nav>
-
-          <div className="mt-auto pt-6 border-t border-blue-800 dark:border-gray-800 flex items-center justify-between">
-            <span className="text-xs text-blue-300 dark:text-gray-500">v1.2.0 • Admin</span>
-            <button 
-              onClick={() => setIsDarkMode(!isDarkMode)} 
-              className="p-2 bg-blue-800 dark:bg-gray-800 rounded-full text-blue-200 hover:text-white transition-colors"
-              title="Alternar Modo Oscuro"
-            >
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Mobile Header */}
-        <header className="lg:hidden bg-industrial-blue dark:bg-gray-950 text-white p-4 flex justify-between items-center sticky top-0 z-40 shadow-sm border-b border-transparent dark:border-gray-800">
-          <div className="flex items-center gap-2">
-            <Footprints size={24} className="text-blue-300" />
-            <span className="font-black uppercase tracking-tighter">Calzado S.A.</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 hover:bg-blue-800 dark:hover:bg-gray-800 rounded-md">
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-blue-800 dark:hover:bg-gray-800 rounded-md">
-              {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </header>
-
-        <main className="flex-1 p-4 lg:p-8 max-w-7xl w-full mx-auto overflow-y-auto">
-          <div className="mb-8 hidden lg:block">
-            <h2 className="text-2xl font-bold text-industrial-gray uppercase tracking-tight">
-              {activeTab === 'dashboard' ? 'Panel de Control' : 'Gestión de Inventario'}
-            </h2>
-            <p className="text-gray-500 text-sm">Bienvenido de nuevo al sistema de gestión mayorista.</p>
-          </div>
-          
-          {activeTab === 'dashboard' ? <Dashboard /> : <Inventory />}
-        </main>
+    <div
+      onMouseMove={handleMouseMove}
+      className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#fafafa] dark:bg-[#151515]"
+    >
+      {/* 1. EL FONDO - MALLA DE PUNTOS LUXURY */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(#D4B271_1px,transparent_0.5px)] dark:bg-[radial-gradient(#D4B271_1px,transparent_0.5px)] opacity-30 dark:opacity-20 [background-size:24px_24px]"></div>
       </div>
 
-      {/* Mobile Backdrop */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
-          onClick={() => setIsSidebarOpen(false)}
+      {/* 2. LINTERNA DE CURSOR DORADA */}
+      <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden transition-opacity duration-300">
+        <div
+          className="absolute w-[400px] h-[400px] bg-brand-gold/20 dark:bg-brand-gold/15 rounded-full blur-[80px] -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out will-change-transform"
+          style={{
+            left: `${mousePosition.x}px`,
+            top: `${mousePosition.y}px`
+          }}
         />
-      )}
+      </div>
+
+      {/* 3. LA TARJETA DE LOGIN */}
+      <div className="relative z-10 w-full max-w-md px-6">
+        <div className="bg-white/80 dark:bg-[#1a1a1a]/90 backdrop-blur-3xl border border-brand-gold/20 dark:border-brand-gold/10 shadow-2xl rounded-2xl p-10 mb-8 relative overflow-hidden">
+          
+          <div className="absolute inset-0 bg-brand-peach/5 dark:bg-brand-gold/5 pointer-events-none rounded-2xl"></div>
+
+          <div className="flex flex-col items-center justify-center mb-10 relative pointer-events-none">
+            {/* Logo  (w-36) */}
+            <img
+              src="/logo.png"
+              alt="Logo Emssa Valems"
+              className="w-36 h-auto object-contain mb-4 drop-shadow-[0_10px_15px_rgba(212,178,113,0.2)] dark:drop-shadow-[0_10px_15px_rgba(212,178,113,0.1)] transition-transform duration-500 hover:scale-105"
+            />
+            <h1 className="text-3xl font-serif font-semibold text-brand-black dark:text-white tracking-widest uppercase mt-2 text-center">
+              Emssa Valems
+            </h1>
+            <div className="w-16 h-[1px] bg-brand-gold my-2 hidden dark:block opacity-50"></div>
+            <p className="text-brand-gold text-xs font-serif font-medium tracking-[0.3em] uppercase mt-1 text-center">
+              For You Woman
+            </p>
+          </div>
+
+          {/* Formulario */}
+          <form onSubmit={handleLogin} className="space-y-6 relative">
+            <div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-gray-400 dark:text-brand-gold/70" />
+                </div>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-11 w-full bg-transparent border-b-2 border-gray-200 dark:border-gray-800 py-3 text-brand-black dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-gold dark:focus:border-brand-gold transition-colors font-medium text-sm"
+                  placeholder="Correo corporativo"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Lock className="h-4 w-4 text-gray-400 dark:text-brand-gold/70" />
+                </div>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-11 w-full bg-transparent border-b-2 border-gray-200 dark:border-gray-800 py-3 text-brand-black dark:text-white placeholder-gray-400 focus:outline-none focus:border-brand-gold dark:focus:border-brand-gold transition-colors font-medium text-sm"
+                  placeholder="Contraseña reservada"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Mensaje de Error */}
+            {errorMsg && (
+              <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-xs font-medium p-3 rounded border border-red-200 dark:border-red-800/30 text-center animate-pulse">
+                {errorMsg}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-10 w-full flex items-center justify-center gap-3 bg-brand-black dark:bg-brand-gold hover:bg-gray-800 dark:hover:bg-[#c2a15c] disabled:opacity-70 text-white dark:text-black font-semibold tracking-wide uppercase text-sm py-4 rounded shadow-lg transition-transform active:scale-95"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Verificando...
+                </>
+              ) : (
+                <>
+                  Acceder al Portal
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+        </div>
+
+        {/* Footer Minimalista */}
+        <p className="text-center text-xs font-serif tracking-widest text-[#a8a8a8] dark:text-gray-500 uppercase">
+          Portal de Moda Industrial
+        </p>
+      </div>
     </div>
   );
 }

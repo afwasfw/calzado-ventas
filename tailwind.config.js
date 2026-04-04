@@ -8,8 +8,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        'industrial-blue': '#1e3a8a',
-        'industrial-gray': '#374151',
+        'brand-peach': '#FCE7DF', // Fondo pastel logo
+        'brand-gold': '#D4B271',  // Text "FOR YOU WOMAN"
+        'brand-black': '#111111', // Monograma principal
       },
     },
   },

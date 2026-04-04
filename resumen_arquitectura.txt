@@ -1,0 +1,84 @@
+================================================================================
+          DOCUMENTO DE ARQUITECTURA: ERP FÁBRICA DE CALZADO (FASE 2)
+================================================================================
+PROYECTO: Sistema Integral Omnicanal de Gestión de Inventario, Recetas y Ventas.
+TECNOLOGÍAS BASE: React/Vite, Supabase (PostgreSQL), n8n, Evolution API, Vercel.
+
+1. ESTRUCTURA DE LA BASE DE DATOS (El Modelo Híbrido)
+--------------------------------------------------------------------------------
+Para gestionar la diversidad extrema de los insumos (desde litros de pegamento 
+hasta plantas con tallas y cueros en pies cuadrados), se utilizará:
+- Una tabla base 'inventario_materiales' con los datos genéricos (Nombre, Stock, Unidad).
+- Una columna especial tipo 'JSONB' dentro de esa tabla que albergará los atributos 
+  específicos (ej. { "talla": 40 }, { "grosor": "1.5mm", "color": "miel" }).
+- Esto evita tablas gigantes e incomantenibles.
+
+2. ESTRUCTURA DE LA INTERFAZ DE USUARIO (UX / Frontend)
+--------------------------------------------------------------------------------
+El panel de inventario evitará mezclar todo en una sola tabla confusa. Se 
+dividirá en "Pestañas" (Tabs) organizadas por las áreas reales de la fábrica:
+- [Pestaña Corte]: Exclusiva para cueros, sintéticos, forros.
+- [Pestaña Aparado]: Exclusiva para hilos, avíos, adornos, pasadores.
+- [Pestaña Armado]: Exclusiva para plantas (con sus curvas de tallas), pegamentos.
+- [Pestaña Producto Terminado]: Zapatos listos en cajas.
+
+3. EL SISTEMA DE RECETAS (B.O.M - Bill of Materials)
+--------------------------------------------------------------------------------
+El núcleo industrial del sistema operará bajo la lógica de "Fichas Técnicas":
+- Se implementará una tercera tabla puente llamada 'recetas_produccion'.
+- Esta cruzará los 'productos_finales' (zapatos) con los 'inventarios_materiales'.
+- FUNCIONAMIENTO AUTOMÁTICO: Cuando el Gerente registre la orden "Fabricar 100 
+  docenas del zapato X", el sistema leerá la receta secreta y descontará en bloque: 
+  ej. 3000 decímetros de cuero y 1200 plantas, ahorrando horas de restas manuales.
+
+4. UI DEL RECETARIO (Visualización por Cartas / Códigos)
+--------------------------------------------------------------------------------
+- Para evitar leer nombres aburridos, los modelos se mostrarán en una cuadrícula 
+  de "Tarjetas" (Cards) elegantes.
+- Cada tarjeta exhibirá la Foto en miniatura del zapato (almacenada en Supabase 
+  Storage) y el Código Industrial (Ej. MD-405) en grande.
+- Al hacer clic en un código, aparecerá una ventana emergente detallando los 
+  materiales promedios necesarios para armar UNA DOCENA (12 pares) de ese modelo, 
+  ajustándose a la realidad de producción al por mayor de la fábrica.
+
+5. CATÁLOGO CENTRAL Y REUTILIZACIÓN (Single Source of Truth)
+--------------------------------------------------------------------------------
+La misma tabla interna de 'productos_finales' alimentará al público de dos maneras 
+sin revelar el secreto industrial (la mezcla de materiales de la receta):
+- Opción A: Una ruta web pública especial (ej. tusistema.com/catalogo) que solo 
+  muestre el Código, Foto y Precio.
+- Opción B: El Bot de Ventas de n8n usará una Herramienta de IA que extraerá esta 
+  tabla para responderle catálogos vivos directamente a los clientes de WhatsApp.
+
+6. SISTEMA DE SEGURIDAD Y AUTENTICACIÓN (LOGIN)
+--------------------------------------------------------------------------------
+Para proteger la integridad del sistema una vez público en servidores (Vercel):
+- PUERTA REACT: Un muro de "Inicio de Sesión" en la página principal para ocultar 
+  los menús de gerente donde piden Usuario y Contraseña.
+- SEGURIDAD SUPABASE RLS: Se activarán políticas estrictas (Row Level Security). 
+  El mundo exterior (clientes, bot) solo tendrá permisos de "LECTURA" (SELECT) 
+  sobre el catálogo, pero ÚNICAMENTE la credencial del Gerente podrá hacer 
+  escrituras, borrados o inserciones (INSERT, UPDATE, DELETE) en la nube para 
+  agregar materiales o nuevos modelos.
+
+7. ECOSISTEMA CONVERSACIONAL IA (Flujos n8n Independientes)
+--------------------------------------------------------------------------------
+Para operar rápida y externamente sin iniciar sesión en la Web App (PWA), el 
+sistema contará con un enrutador en n8n validado por el 'remoteJid' (Número):
+
+A) BOT DE VENTAS (Módulo Cliente):
+   - Atiende a cualquier número de teléfono estándar (Público).
+   - HERRAMIENTAS PERMITIDAS: Consultar catálogo público, leer precios, capturar 
+     datos de envío, e insertar solicitudes en la tabla de 'pedidos'.
+   - LÍMITE: No tiene acceso al inventario de materiales crudos ni a las recetas.
+
+B) BOT ADMINISTRADOR (Módulo Gerente "ODO" - Opciones De Operador):
+   - Atiende estrictamente SÓLO los mensajes que provengan del número de teléfono
+     registrado por el dueño o encargado de producción.
+   - HERRAMIENTAS DE MODO DIOS: Agente IA con permisos totales de Lectura, Modificación 
+     y Eliminación (CRUD completo).
+   - USO IDEAL: "Operaciones relámpago" (Ej. El gerente pregunta desde el auto: 
+     ¿Cuánto cuero nos queda? / Añade 50 cajas al stock general).
+
+================================================================================
+ESTADO ACTUAL DEL PLAN: ¡Arquitectura omnicanal definida y lista para su desarrollo!
