@@ -9,11 +9,11 @@ import { toast } from 'react-hot-toast';
 
 export default function InventoryTab() {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
-  const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [adjustmentItem, setAdjustmentItem] = useState(null); // Para saber qué ítem preseleccionar
   const [activeCategory, setActiveCategory] = useState('Todos');
   
   // Maestras directamente desde Supabase
@@ -258,10 +258,13 @@ export default function InventoryTab() {
 
                         {activeDropdown === item.id && (
                           <div className="absolute right-0 top-full mt-1 w-48 bg-[#111] border border-[#333] rounded-xl shadow-2xl overflow-hidden z-20 animate-fade-in-up origin-top-right">
-                            <button onClick={() => setIsAdjustmentOpen(true)} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]">
+                            <button 
+                              onClick={() => setAdjustmentItem(item)} 
+                              className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]"
+                            >
                               Ajustar Stock Manual
                             </button>
-                            <button onClick={() => setIsAdjustmentOpen(true)} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]">
+                            <button className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-brand-gold/10 hover:text-brand-gold transition-colors border-b border-[#222]">
                               Auditar Movimientos
                             </button>
                             <button 
@@ -305,7 +308,20 @@ export default function InventoryTab() {
         categories={categories} 
         units={units} 
       />
-      <StockAdjustmentModal isOpen={isAdjustmentOpen} onClose={() => setIsAdjustmentOpen(false)} />
+      
+      {/* BOTON GENERICO PARA ABRIR MODAL STOCK TOTAL */}
+      {/* Nota: InventoryTab no tiene botón genérico de Ajustar Stock, solo en la fila de 3 puntos */}
+
+      <StockAdjustmentModal 
+        isOpen={adjustmentItem !== null} 
+        onClose={() => setAdjustmentItem(null)} 
+        inventory={inventory}
+        preselectedItem={adjustmentItem}
+        onSuccess={() => {
+          setAdjustmentItem(null);
+          fetchInventoryAndCategories();
+        }}
+      />
       
       <CategoryManagerModal 
         isOpen={isCategoryModalOpen} 
