@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, ListTree, Edit2, Trash2, Plus, Save } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 export default function CategoryManagerModal({ isOpen, onClose, categories, setCategories }) {
   const [isAddMode, setIsAddMode] = useState(false);
@@ -8,6 +9,7 @@ export default function CategoryManagerModal({ isOpen, onClose, categories, setC
   // Para la edición en línea
   const [editingIndex, setEditingIndex] = useState(null);
   const [editCatName, setEditCatName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   if (!isOpen) return null;
 
@@ -19,30 +21,58 @@ export default function CategoryManagerModal({ isOpen, onClose, categories, setC
   };
 
   // Maneja la creación de categorías
-  const handleAddNew = (e) => {
+  const handleAddNew = async (e) => {
     e.preventDefault();
-    if (newCatName.trim() !== '') {
-      setCategories([...categories, newCatName.trim()]);
-      setNewCatName('');
-      setIsAddMode(false);
+    const catName = newCatName.trim();
+    if (catName !== '') {
+      try {
+        setIsSaving(true);
+        const { error } = await supabase.from('categorias_insumos').insert([{ nombre: catName }]);
+        if (error) throw error;
+        setCategories([...categories, catName]);
+        setNewCatName('');
+        setIsAddMode(false);
+      } catch (err) {
+        console.error('Error al guardar:', err.message);
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
   // Maneja el guardado de la edición
-  const handleSaveEdit = (idx) => {
-    if (editCatName.trim() !== '') {
-      const updated = [...categories];
-      updated[idx] = editCatName.trim();
-      setCategories(updated);
+  const handleSaveEdit = async (idx) => {
+    const newName = editCatName.trim();
+    if (newName !== '') {
+      try {
+        setIsSaving(true);
+        const oldName = categories[idx];
+        const { error } = await supabase.from('categorias_insumos').update({ nombre: newName }).eq('nombre', oldName);
+        if (error) throw error;
+        const updated = [...categories];
+        updated[idx] = newName;
+        setCategories(updated);
+      } catch (err) {
+        console.error('Error al modificar:', err.message);
+      } finally {
+        setIsSaving(false);
+      }
     }
     setEditingIndex(null);
   };
 
   // Eliminar
-  const handleDelete = (idx) => {
+  const handleDelete = async (idx) => {
     if (window.confirm("¿Seguro que deseas eliminar esta categoría? Los insumos que estén bajo ella podrían quedar sin filtro correcto.")) {
-      const updated = categories.filter((_, i) => i !== idx);
-      setCategories(updated);
+      try {
+        const catName = categories[idx];
+        const { error } = await supabase.from('categorias_insumos').delete().eq('nombre', catName);
+        if (error) throw error;
+        const updated = categories.filter((_, i) => i !== idx);
+        setCategories(updated);
+      } catch (err) {
+        console.error('Error al borrar:', err.message);
+      }
     }
   };
 
@@ -161,9 +191,10 @@ export default function CategoryManagerModal({ isOpen, onClose, categories, setC
                 </button>
                 <button 
                   type="submit"
-                  className="flex-[2] bg-brand-gold hover:bg-[#c2a15c] text-black font-bold py-3 px-4 rounded-xl shadow-[0_0_15px_rgba(212,178,113,0.3)] transition-colors"
+                  disabled={isSaving}
+                  className="flex-[2] bg-brand-gold hover:bg-[#c2a15c] text-black font-bold py-3 px-4 rounded-xl shadow-none transition-colors disabled:opacity-50"
                 >
-                  Guardar Categoría
+                  {isSaving ? 'Guardando...' : 'Guardar Categoría'}
                 </button>
               </div>
             </form>

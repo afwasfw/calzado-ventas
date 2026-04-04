@@ -13,17 +13,29 @@ export default function InventoryTab() {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [activeCategory, setActiveCategory] = useState('Todos');
   
-  // Lista dinámica de categorías comerciales
-  const [categories, setCategories] = useState(['Cueros', 'Suelas', 'Químicos', 'Avíos', 'Empaque']);
+  // Categorías directamente desde Supabase
+  const [categories, setCategories] = useState([]);
   
   // Estado real de Supabase
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Consulta en Tiempo Promedio a Supabase
-  const fetchInventory = async () => {
+  const fetchInventoryAndCategories = async () => {
     try {
       setLoading(true);
+
+      // Traer las categorías maestras
+      const { data: catData, error: catError } = await supabase
+        .from('categorias_insumos')
+        .select('nombre')
+        .order('nombre', { ascending: true });
+
+      if (!catError && catData) {
+        setCategories(catData.map(c => c.nombre));
+      }
+
+      // Traer el inventario
       const { data, error } = await supabase
         .from('inventario_materiales')
         .select('*')
@@ -32,14 +44,14 @@ export default function InventoryTab() {
       if (error) throw error;
       setInventory(data || []);
     } catch (error) {
-      console.error('Error fetching inventory:', error.message);
+      console.error('Error fetching inventory or categories:', error.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInventory();
+    fetchInventoryAndCategories();
   }, []);
 
   const getStatusStyle = (stock_actual, stock_alerta) => {
