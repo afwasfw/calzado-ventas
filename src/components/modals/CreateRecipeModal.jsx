@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save, Plus, Trash2, Beaker } from 'lucide-react';
 
-export default function CreateRecipeModal({ isOpen, onClose, categories = [] }) {
+export default function CreateRecipeModal({ isOpen, onClose, categories = [], units = [] }) {
   // Estado local para simular la lista de ingredientes dinámicos
   const [ingredients, setIngredients] = useState([
     { category: '', name: '', amount: '', unit: '' }
@@ -94,13 +94,10 @@ export default function CreateRecipeModal({ isOpen, onClose, categories = [] }) 
                   <input type="number" className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-brand-gold font-mono focus:border-brand-peach outline-none" placeholder="Cant." />
                   
                   <select className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-gray-300 focus:border-brand-peach outline-none">
-                    <option>Medida...</option>
-                    <option>Pies²</option>
-                    <option>Metros</option>
-                    <option>Pares</option>
-                    <option>Sacos</option>
-                    <option>Galones</option>
-                    <option>Unidades</option>
+                    <option value="">Medida...</option>
+                    {units.map((unit, unitIdx) => (
+                      <option key={unitIdx} value={unit}>{unit}</option>
+                    ))}
                   </select>
 
                   <button type="button" onClick={() => removeIngredientRow(idx)} className="p-2 text-gray-600 hover:text-red-500 transition-colors">

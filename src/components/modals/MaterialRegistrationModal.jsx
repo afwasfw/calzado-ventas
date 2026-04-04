@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Save } from 'lucide-react';
 
-export default function MaterialRegistrationModal({ isOpen, onClose, categories = [] }) {
+export default function MaterialRegistrationModal({ isOpen, onClose, categories = [], units = [] }) {
   if (!isOpen) return null;
 
   return (
@@ -36,11 +36,10 @@ export default function MaterialRegistrationModal({ isOpen, onClose, categories 
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Medida Principal</label>
               <select className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-gold transition-colors appearance-none">
-                <option>Metros</option>
-                <option>Pies cuadrados</option>
-                <option>Pares</option>
-                <option>Galones</option>
-                <option>Unidades</option>
+                <option value="">Selecciona unidad...</option>
+                {units.map((unit, idx) => (
+                  <option key={idx} value={unit}>{unit}</option>
+                ))}
               </select>
             </div>
           </div>

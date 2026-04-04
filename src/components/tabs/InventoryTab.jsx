@@ -3,18 +3,21 @@ import { Search, Filter, Plus, MoreHorizontal } from 'lucide-react';
 import MaterialRegistrationModal from '../modals/MaterialRegistrationModal';
 import StockAdjustmentModal from '../modals/StockAdjustmentModal';
 import CategoryManagerModal from '../modals/CategoryManagerModal';
+import UnitManagerModal from '../modals/UnitManagerModal';
 import { supabase } from '../../lib/supabase';
 
 export default function InventoryTab() {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isAdjustmentOpen, setIsAdjustmentOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
   
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [activeCategory, setActiveCategory] = useState('Todos');
   
-  // Categorías directamente desde Supabase
+  // Maestras directamente desde Supabase
   const [categories, setCategories] = useState([]);
+  const [units, setUnits] = useState([]);
   
   // Estado real de Supabase
   const [inventory, setInventory] = useState([]);
@@ -33,6 +36,16 @@ export default function InventoryTab() {
 
       if (!catError && catData) {
         setCategories(catData.map(c => c.nombre));
+      }
+
+      // Traer las unidades de medida maestras
+      const { data: unitData, error: unitError } = await supabase
+        .from('unidades_medida')
+        .select('nombre')
+        .order('nombre', { ascending: true });
+        
+      if (!unitError && unitData) {
+        setUnits(unitData.map(u => u.nombre));
       }
 
       // Traer el inventario
@@ -136,6 +149,14 @@ export default function InventoryTab() {
               <Plus className="w-4 h-4" />
               Categorías
             </button>
+            <button 
+              onClick={() => setIsUnitModalOpen(true)}
+              className="bg-[#1a1a1a] border border-[#333] text-gray-300 hover:text-brand-gold hover:border-brand-gold/50 px-4 py-3.5 rounded-xl transition-colors shrink-0 font-bold flex items-center gap-2"
+              title="Administrar Magnitudes"
+            >
+              <Plus className="w-4 h-4" />
+              Unidades
+            </button>
           </div>
         </div>
 
@@ -232,7 +253,7 @@ export default function InventoryTab() {
       </div>
 
       {/* RENDERIZADO CONDICIONAL DE LOS MODALES */}
-      <MaterialRegistrationModal isOpen={isRegistrationOpen} onClose={() => setIsRegistrationOpen(false)} categories={categories} />
+      <MaterialRegistrationModal isOpen={isRegistrationOpen} onClose={() => setIsRegistrationOpen(false)} categories={categories} units={units} />
       <StockAdjustmentModal isOpen={isAdjustmentOpen} onClose={() => setIsAdjustmentOpen(false)} />
       
       <CategoryManagerModal 
@@ -240,6 +261,13 @@ export default function InventoryTab() {
         onClose={() => setIsCategoryModalOpen(false)} 
         categories={categories}
         setCategories={setCategories}
+      />
+      
+      <UnitManagerModal 
+        isOpen={isUnitModalOpen} 
+        onClose={() => setIsUnitModalOpen(false)} 
+        units={units}
+        setUnits={setUnits}
       />
     </>
   );
