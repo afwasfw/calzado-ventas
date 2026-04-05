@@ -43,6 +43,11 @@ export default function StockAdjustmentModal({ isOpen, onClose, inventory = [], 
       const diff = operation === 'add' ? numAmount : -numAmount;
       const newStock = parseFloat(item.stock_actual) + diff;
 
+      if (newStock < 0) {
+        toast.error(`No puedes dejar stock negativo. (Stock actual: ${item.stock_actual})`);
+        return;
+      }
+
       // Actualizar en base de datos
       const { error } = await supabase
         .from('inventario_materiales')

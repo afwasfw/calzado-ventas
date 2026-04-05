@@ -58,6 +58,24 @@ export default function NewBatchModal({ isOpen, onClose, shoeDatabase = [], onSu
           
         if (matErr) throw matErr;
 
+        // 2.5 VALIDAR QUE HAYA STOCK SUFICIENTE
+        const insufficientMaterials = [];
+        recipeData.forEach(req => {
+          const mat = materialsData?.find(m => m.id === req.material_id);
+          if (mat) {
+            const gastoTotal = parseFloat(req.cantidad_por_docena) * cantDocenas;
+            if (mat.stock_actual < gastoTotal) {
+              insufficientMaterials.push(`${mat.nombre} (Faltan ${(gastoTotal - mat.stock_actual).toFixed(2)})`);
+            }
+          }
+        });
+
+        if (insufficientMaterials.length > 0) {
+          toast.error(`Stock insuficiente para producir el lote:\n${insufficientMaterials.join(', ')}`, { duration: 5000 });
+          setIsSubmitting(false);
+          return;
+        }
+
         // Armar el lote de actualizaciones a disminuir
         const stockUpdates = recipeData.map(req => {
           const mat = materialsData?.find(m => m.id === req.material_id);

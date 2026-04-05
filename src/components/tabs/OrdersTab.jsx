@@ -52,12 +52,37 @@ export default function OrdersTab() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrdersAndCatalog();
   }, []);
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       setUpdatingId(orderId);
+      
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      // SI SE MARCA COMO ENTREGADO, DESCONTAR DEL STOCK DE PRODUCTO TERMINADO
+      if (newStatus === 'Entregado') {
+        const product = catalog.find(p => p.id === order.producto_id);
+        if (!product) {
+          toast.error("El producto ya no existe en el catálogo.");
+          return;
+        }
+
+        if (product.stock_docenas < order.cantidad_docenas) {
+          toast.error(`No hay suficiente stock en Almacén. (Stock: ${product.stock_docenas} docenas)`);
+          return;
+        }
+
+        const { error: stockErr } = await supabase
+          .from('productos_finales')
+          .update({ stock_docenas: product.stock_docenas - order.cantidad_docenas })
+          .eq('id', order.producto_id);
+          
+        if (stockErr) throw stockErr;
+      }
+
       const { error } = await supabase
         .from('pedidos')
         .update({ estado: newStatus })

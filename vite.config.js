@@ -13,10 +13,11 @@ export default defineConfig({
       },
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Proyecto Base App',
-        short_name: 'Proyecto',
-        description: 'Una aplicación web progresiva (PWA)',
-        theme_color: '#ffffff',
+        name: 'Emssa Valems - Portal Operativo',
+        short_name: 'Emssa Valems',
+        description: 'Sistema de gestión de producción y ventas para Emssa Valems',
+        theme_color: '#000000',
+        background_color: '#000000',
         icons: [
           {
             src: 'pwa-192x192.png',

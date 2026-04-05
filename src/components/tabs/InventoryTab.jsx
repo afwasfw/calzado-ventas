@@ -15,6 +15,7 @@ export default function InventoryTab() {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [adjustmentItem, setAdjustmentItem] = useState(null); // Para saber qué ítem preseleccionar
   const [activeCategory, setActiveCategory] = useState('Todos');
+  const [searchTerm, setSearchTerm] = useState('');
   
   // Maestras directamente desde Supabase
   const [categories, setCategories] = useState([]);
@@ -119,9 +120,12 @@ export default function InventoryTab() {
   };
 
   // Filtrado reactivo en la data real
-  const filteredInventory = activeCategory === 'Todos' 
-    ? inventory 
-    : inventory.filter(item => item.categoria === activeCategory);
+  const filteredInventory = inventory.filter(item => {
+    const matchesCategory = activeCategory === 'Todos' || item.categoria === activeCategory;
+    const matchesSearch = (item.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (item.categoria || '').toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <>
@@ -156,6 +160,8 @@ export default function InventoryTab() {
             </div>
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-12 w-full bg-[#1a1a1a] border border-[#333] rounded-xl py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-brand-gold transition-colors font-medium"
               placeholder="Buscar insumos por nombre o tipo..."
             />
