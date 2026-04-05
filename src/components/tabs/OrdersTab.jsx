@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, CheckCircle2, Clock, Truck, Factory, XCircle } from 'lucide-react';
+import { Search, ChevronDown, CheckCircle2, Clock, Truck, Factory, XCircle, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
+import ManualOrderModal from '../modals/ManualOrderModal';
 
 export default function OrdersTab() {
   const [orders, setOrders] = useState([]);
+  const [catalog, setCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [updatingId, setUpdatingId] = useState(null);
+  
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
 
-  const fetchOrders = async () => {
+  const fetchOrdersAndCatalog = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data: pedidosData, error } = await supabase
         .from('pedidos')
         .select(`
           *,
@@ -20,11 +28,21 @@ export default function OrdersTab() {
             codigo_modelo,
             nombre
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
       if (error) throw error;
-      setOrders(data || []);
+      
+      const { data: catData } = await supabase.from('productos_finales').select('*');
+      setCatalog(catData || []);
+
+      // Ordenar: por Categoría de status, y si empatan, por Fecha reciente
+      const sortedData = (pedidosData || []).sort((a,b) => {
+        const priority = { 'Pendiente': 1, 'En Producción': 2, 'Listo': 3, 'Entregado': 4, 'Cancelado': 5 };
+        if (priority[a.estado] !== priority[b.estado]) return priority[a.estado] - priority[b.estado];
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+
+      setOrders(sortedData);
     } catch (err) {
       console.error('Error fetching orders:', err.message);
       toast.error('Error al cargar la tabla de pedidos.');
@@ -47,7 +65,7 @@ export default function OrdersTab() {
 
       if (error) throw error;
       toast.success(`Pedido marcado como: ${newStatus}`);
-      fetchOrders(); // Reload orders to reflect changes
+      fetchOrdersAndCatalog(); // Reload orders to reflect changes
     } catch (err) {
       console.error('Error updating order:', err.message);
       toast.error('Ocurrió un error al actualizar el estado.');
@@ -56,12 +74,16 @@ export default function OrdersTab() {
     }
   };
 
+  useEffect(() => {
+    fetchOrdersAndCatalog();
+  }, []);
+
   const getStatusBadge = (status) => {
     switch (status) {
       case 'Pendiente':
-        return <span className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-full text-xs font-bold uppercase tracking-wider"><Clock className="w-3.5 h-3.5" /> Pendiente (Bot)</span>;
+        return <span className="flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm"><Clock className="w-3.5 h-3.5" /> Pendiente (Bot)</span>;
       case 'En Producción':
-        return <span className="flex items-center gap-1.5 px-3 py-1 bg-brand-gold/10 text-brand-gold border border-brand-gold/20 rounded-full text-xs font-bold uppercase tracking-wider"><Factory className="w-3.5 h-3.5" /> En Producción</span>;
+        return <span className="flex items-center gap-1.5 px-3 py-1 bg-brand-gold/10 text-brand-gold border border-brand-gold/20 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm"><Factory className="w-3.5 h-3.5" /> En Producción</span>;
       case 'Listo':
         return <span className="flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full text-xs font-bold uppercase tracking-wider"><CheckCircle2 className="w-3.5 h-3.5" /> Listo / Empacado</span>;
       case 'Entregado':
@@ -79,6 +101,9 @@ export default function OrdersTab() {
     (order.ciudad_destino || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 md:py-12 animate-fade-in-up relative z-10">
       
@@ -92,6 +117,13 @@ export default function OrdersTab() {
             Monitor de estado de producción y despacho de órdenes B2B.
           </p>
         </div>
+        <button 
+          onClick={() => setIsOrderModalOpen(true)}
+          className="flex items-center justify-center gap-2 bg-brand-gold hover:bg-[#c2a15c] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 text-sm shadow-[0_0_15px_rgba(212,178,113,0.3)]"
+        >
+          <Plus className="w-5 h-5" />
+          Crear Pedido Manual
+        </button>
       </div>
 
       {/* BARRA DE BÚSQUEDA */}
@@ -103,7 +135,10 @@ export default function OrdersTab() {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // Reset page on query change
+            }}
             className="pl-12 w-full bg-[#1a1a1a] border border-[#333] rounded-xl py-4 text-white placeholder-gray-500 focus:outline-none focus:border-brand-gold transition-colors font-medium text-lg shadow-xl shadow-black/20"
             placeholder="🔎 Buscar por Cliente, Código de Zapato o Ciudad..."
           />
@@ -128,12 +163,12 @@ export default function OrdersTab() {
                 <tr>
                   <td colSpan="5" className="py-12 text-center text-gray-500 animate-pulse">Consultando historial de órdenes...</td>
                 </tr>
-              ) : filteredOrders.length === 0 ? (
+              ) : paginatedOrders.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="py-12 text-center text-gray-500">No hay pedidos registrados que coincidan.</td>
                 </tr>
-              ) : filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-[#1f1f1f] transition-colors group">
+              ) : paginatedOrders.map((order) => (
+                <tr key={order.id} className="hover:bg-[#1f1f1f] transition-colors group relative z-0 hover:z-50">
                   
                   {/* CLIENTE INFO */}
                   <td className="py-4 px-6">
@@ -218,8 +253,47 @@ export default function OrdersTab() {
             </tbody>
           </table>
         </div>
+        
+        {/* PAGINATION CONTROLS */}
+        {totalPages > 1 && (
+          <div className="border-t border-[#333] px-6 py-4 flex items-center justify-between bg-[#111]">
+            <span className="text-sm text-gray-400">
+              Mostrando {paginatedOrders.length} de {filteredOrders.length} pedidos
+            </span>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-1 px-3 rounded bg-[#222] border border-[#333] text-white disabled:opacity-30 hover:bg-[#333] transition-colors flex items-center"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="text-brand-gold font-bold text-sm px-2">
+                Página {currentPage} de {totalPages}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="p-1 px-3 rounded bg-[#222] border border-[#333] text-white disabled:opacity-30 hover:bg-[#333] transition-colors flex items-center"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       
+      {/* RENDERIZADO CONDICIONAL DE LOS MODALES */}
+      <ManualOrderModal 
+        isOpen={isOrderModalOpen} 
+        onClose={() => setIsOrderModalOpen(false)} 
+        catalog={catalog}
+        onSuccess={() => {
+          setIsOrderModalOpen(false);
+          fetchOrdersAndCatalog();
+        }}
+      />
+
     </div>
   );
 }
