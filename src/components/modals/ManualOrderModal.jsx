@@ -44,7 +44,7 @@ export default function ManualOrderModal({ isOpen, onClose, catalog = [], onSucc
         producto_id: formData.producto_id,
         cantidad_docenas: docenas,
         total_venta: parseFloat(matchedProduct.precio_docena_mayorista) * docenas,
-        estado: 'Pendiente',
+        estado: 'En Producción',
         ciudad_destino: formData.ciudad || null,
         notas: formData.notas || null
       }]);

@@ -12,6 +12,7 @@ import OverviewTab from './tabs/OverviewTab';
 import InventoryTab from './tabs/InventoryTab';
 import FinishedGoodsTab from './tabs/FinishedGoodsTab';
 import ShoeRecipesTab from './tabs/ShoeRecipesTab';
+import OrdersTab from './tabs/OrdersTab';
 
 export default function DashboardLayout({ session, handleLogout }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -19,8 +20,9 @@ export default function DashboardLayout({ session, handleLogout }) {
 
   const navItems = [
     { id: 'resumen', label: 'Panel de Control', icon: LayoutDashboard },
-    { id: 'inventario', label: 'Inventario Insumos', icon: Package },
+    { id: 'pedidos', label: 'Gestión de Pedidos', icon: Package },
     { id: 'almacen', label: 'Producto Terminado', icon: Archive },
+    { id: 'inventario', label: 'Inventario Insumos', icon: Settings },
     { id: 'recetario', label: 'Fichas de Calzado', icon: Settings },
   ];
 
@@ -90,10 +92,12 @@ export default function DashboardLayout({ session, handleLogout }) {
         
         {activeTab === 'resumen' && <OverviewTab session={session} />}
         
-        {activeTab === 'inventario' && <InventoryTab />}
-
+        {activeTab === 'pedidos' && <OrdersTab />}
+        
         {activeTab === 'almacen' && <FinishedGoodsTab />}
         
+        {activeTab === 'inventario' && <InventoryTab />}
+
         {activeTab === 'recetario' && <ShoeRecipesTab />}
 
       </main>
