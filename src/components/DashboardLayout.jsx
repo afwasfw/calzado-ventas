@@ -74,7 +74,7 @@ export default function DashboardLayout({ session, handleLogout }) {
       {/* MENÚ MÓVIL (HEADER HAMBURGUESA) */}
       {/* ======================================= */}
       <div className="md:hidden fixed top-0 w-full bg-[#161616] border-b border-[#222] px-4 py-4 z-20 flex justify-between items-center shadow-sm">
-        <img src="/logo.png" alt="Logo" className="w-10" />
+        <img src="/logo_base.png" alt="Emssa Valems" className="w-10" />
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-white p-2">
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>

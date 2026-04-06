@@ -107,7 +107,7 @@ function App() {
           <div className="flex flex-col items-center justify-center mb-10 relative pointer-events-none">
             {/* Logo  (w-36) */}
             <img
-              src="/logo.png"
+              src="/logo_base.png"
               alt="Logo Emssa Valems"
               className="w-36 h-auto object-contain mb-4 drop-shadow-[0_10px_15px_rgba(212,178,113,0.2)] dark:drop-shadow-[0_10px_15px_rgba(212,178,113,0.1)] transition-transform duration-500 hover:scale-105"
             />
