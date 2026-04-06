@@ -34,7 +34,7 @@ export default function DashboardLayout({ session, handleLogout }) {
       {/* ======================================= */}
       <aside className="hidden md:flex flex-col w-72 bg-[#161616] border-r border-[#222] z-10 transition-colors shadow-2xl shadow-brand-gold/5">
         <div className="p-8 flex flex-col items-center border-b border-[#222]">
-          <img src="/logo.png" alt="Emssa Valems" className="w-16 mb-4 drop-shadow-[0_0px_10px_rgba(212,178,113,0.15)]" />
+          <img src="/logo_base.png" alt="Emssa Valems" className="w-16 mb-4 drop-shadow-[0_0px_10px_rgba(212,178,113,0.15)]" />
           <h2 className="text-xl font-serif tracking-widest text-white uppercase font-semibold">Emssa Valems</h2>
           <p className="text-brand-gold text-[10px] tracking-[0.25em] font-serif uppercase mt-1">Portal Operativo</p>
         </div>
