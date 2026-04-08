@@ -80,17 +80,17 @@ function App() {
   return (
     <div
       onMouseMove={handleMouseMove}
-      className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#fafafa] dark:bg-[#151515]"
+      className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#111111]"
     >
-      {/* 1. EL FONDO - MALLA DE PUNTOS LUXURY */}
+      {/* 1. EL FONDO - MALLA DE PUNTOS LUXURY (Fuerza contraste) */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(#D4B271_1px,transparent_0.5px)] dark:bg-[radial-gradient(#D4B271_1px,transparent_0.5px)] opacity-30 dark:opacity-20 [background-size:24px_24px]"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(#D4B271_1px,transparent_0.5px)] opacity-20 [background-size:24px_24px]"></div>
       </div>
 
       {/* 2. LINTERNA DE CURSOR DORADA */}
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden transition-opacity duration-300">
         <div
-          className="absolute w-[400px] h-[400px] bg-brand-gold/20 dark:bg-brand-gold/15 rounded-full blur-[80px] -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out will-change-transform"
+          className="absolute w-[400px] h-[400px] bg-brand-gold/15 rounded-full blur-[80px] -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out will-change-transform"
           style={{
             left: `${mousePosition.x}px`,
             top: `${mousePosition.y}px`
@@ -100,9 +100,9 @@ function App() {
 
       {/* 3. LA TARJETA DE LOGIN */}
       <div className="relative z-10 w-full max-w-md px-6">
-        <div className="bg-white/80 dark:bg-[#1a1a1a]/90 backdrop-blur-3xl border border-brand-gold/20 dark:border-brand-gold/10 shadow-2xl rounded-2xl p-10 mb-8 relative overflow-hidden">
+        <div className="bg-[#1a1a1a]/90 backdrop-blur-3xl border border-brand-gold/10 shadow-2xl rounded-2xl p-10 mb-8 relative overflow-hidden">
           
-          <div className="absolute inset-0 bg-brand-peach/5 dark:bg-brand-gold/5 pointer-events-none rounded-2xl"></div>
+          <div className="absolute inset-0 bg-brand-gold/5 pointer-events-none rounded-2xl"></div>
 
           <div className="flex flex-col items-center justify-center mb-10 relative pointer-events-none">
             {/* Logo  (w-36) */}
