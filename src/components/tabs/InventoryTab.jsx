@@ -205,8 +205,8 @@ export default function InventoryTab() {
           </div>
         </div>
 
-        {/* LA TABLA CORPORATIVA */}
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-2xl overflow-visible shadow-2xl shadow-black/50">
+        {/* VISTA DE TABLA (ESCRITORIO / TABLET ANCHA) */}
+        <div className="hidden md:block bg-[#1a1a1a] border border-[#333] rounded-2xl overflow-visible shadow-2xl shadow-black/50">
           <div className="overflow-visible">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -221,11 +221,11 @@ export default function InventoryTab() {
               <tbody className="divide-y divide-[#222]">
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="py-12 text-center text-gray-500 animate-pulse">Sincronizando con Supabase de fábrica...</td>
+                    <td colSpan="5" className="py-12 text-center text-gray-500 animate-pulse font-serif italic">Sincronizando con Supabase de fábrica...</td>
                   </tr>
                 ) : filteredInventory.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="py-12 text-center text-gray-500">El almacén está vacío. Registra tu primer material.</td>
+                    <td colSpan="5" className="py-12 text-center text-gray-500">No se encontraron insumos con esos criterios.</td>
                   </tr>
                 ) : filteredInventory.map((item) => (
                   <tr key={item.id} className="hover:bg-[#1f1f1f] transition-colors group">
@@ -292,15 +292,66 @@ export default function InventoryTab() {
             </table>
           </div>
           
-          {/* Footer de Tabla Oculto si no hay data */}
           {filteredInventory.length > 0 && (
             <div className="bg-[#111] border-t border-[#333] p-4 flex justify-between items-center text-sm text-gray-500">
               <p>Mostrando {filteredInventory.length} insumos registrados</p>
-              <div className="flex gap-2">
-                <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] opacity-50 cursor-not-allowed">Anterior</button>
-                <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] opacity-50 cursor-not-allowed">Siguiente</button>
+              <div className="flex gap-2 text-xs">
+                <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] opacity-50 cursor-not-allowed uppercase font-bold tracking-widest">Ant.</button>
+                <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] opacity-50 cursor-not-allowed uppercase font-bold tracking-widest">Sig.</button>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* VISTA DE TARJETAS (MÓVIL / PANTALLAS PEQUEÑAS) */}
+        <div className="md:hidden space-y-4">
+          {loading ? (
+            <div className="py-20 text-center text-brand-gold/50 animate-pulse font-serif italic">Sincronizando almacén móvil...</div>
+          ) : filteredInventory.length === 0 ? (
+            <div className="py-20 text-center text-gray-500 bg-[#161616] rounded-2xl border border-dashed border-[#333]">El almacén móvil está vacío.</div>
+          ) : (
+            filteredInventory.map((item) => (
+              <div key={item.id} className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-5 shadow-lg active:scale-[0.98] transition-all overflow-hidden relative group">
+                {/* Indicador de estado lateral */}
+                <div className={`absolute top-0 left-0 w-1.5 h-full ${item.stock_actual <= item.stock_alerta ? 'bg-red-500' : 'bg-brand-gold'}`}></div>
+                
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-white font-bold text-lg leading-tight">{item.nombre}</h3>
+                    <p className="inline-block mt-2 px-2 py-0.5 rounded bg-brand-gold/10 text-brand-gold text-[10px] font-bold uppercase tracking-widest border border-brand-gold/20">
+                      {item.categoria}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-2xl font-mono font-bold text-white leading-none">{item.stock_actual}</span>
+                    <span className="text-[10px] text-gray-500 uppercase font-bold mt-1 tracking-widest">{item.unidad_medida}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t border-[#333]">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${getStatusStyle(item.stock_actual, item.stock_alerta)}`}>
+                    Stock {getStatusText(item.stock_actual, item.stock_alerta)}
+                  </span>
+                  
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setAdjustmentItem(item)}
+                      className="p-2.5 bg-brand-gold/10 text-brand-gold rounded-lg border border-brand-gold/20 active:bg-brand-gold active:text-black transition-colors"
+                      title="Ajustar"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => deleteInsumo(item.id, item.nombre)}
+                      className="p-2.5 bg-red-500/10 text-red-500 rounded-lg border border-red-500/20 active:bg-red-500 active:text-white transition-colors"
+                      title="Eliminar"
+                    >
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
         
