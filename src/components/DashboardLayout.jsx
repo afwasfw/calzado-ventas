@@ -35,7 +35,7 @@ export default function DashboardLayout({ session, handleLogout }) {
       <aside className="hidden md:flex flex-col w-72 bg-[#161616] border-r border-[#222] z-10 transition-colors shadow-2xl shadow-brand-gold/5">
         <div className="p-8 flex flex-col items-center border-b border-[#222]">
           <img src="/logo_base.png" alt="Emssa Valems" className="w-16 mb-4 drop-shadow-[0_0px_10px_rgba(212,178,113,0.15)]" />
-          <h2 className="text-xl font-serif tracking-widest text-white uppercase font-semibold">Emssa Valems</h2>
+          <h2 className="text-xl font-serif tracking-widest text-white uppercase font-semibold text-center leading-tight">Emssa Valems</h2>
           <p className="text-brand-gold text-[10px] tracking-[0.25em] font-serif uppercase mt-1">Portal Operativo</p>
         </div>
 
@@ -71,14 +71,75 @@ export default function DashboardLayout({ session, handleLogout }) {
       </aside>
 
       {/* ======================================= */}
-      {/* MENÚ MÓVIL (HEADER HAMBURGUESA) */}
+      {/* MENÚ MÓVIL (HEADER + SIDEBAR OVERLAY) */}
       {/* ======================================= */}
-      <div className="md:hidden fixed top-0 w-full bg-[#161616] border-b border-[#222] px-4 py-4 z-20 flex justify-between items-center shadow-sm">
-        <img src="/logo_base.png" alt="Emssa Valems" className="w-10" />
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-white p-2">
+      <div className="md:hidden fixed top-0 w-full bg-[#161616] border-b border-[#222] px-4 py-4 z-50 flex justify-between items-center shadow-sm">
+        <div className="flex items-center gap-3">
+          <img src="/logo_base.png" alt="Emssa Valems" className="w-8 h-8 object-contain" />
+          <span className="text-white font-serif text-sm uppercase tracking-wider font-bold">EMSSA</span>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-white p-2 bg-[#222] rounded-lg">
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
+
+      {/* Sidebar Móvil Overlay */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-[60] animate-fade-in">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+          
+          {/* Content */}
+          <div className="absolute top-0 right-0 w-4/5 max-w-sm h-full bg-[#161616] shadow-2xl flex flex-col animate-slide-in-right border-l border-[#333]">
+            <div className="p-8 flex flex-col items-center border-b border-[#222] bg-black/20">
+              <img src="/logo_base.png" alt="Emssa Valems" className="w-14 mb-4" />
+              <h2 className="text-lg font-serif tracking-widest text-white uppercase font-bold text-center">Emssa Valems</h2>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <nav className="flex-1 py-8 px-4 overflow-y-auto overflow-x-hidden">
+              <ul className="space-y-3">
+                {navItems.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl transition-all font-bold text-sm
+                        ${activeTab === item.id 
+                          ? 'bg-brand-gold text-black shadow-lg translate-x-1' 
+                          : 'text-gray-400 active:bg-brand-gold/10 active:text-brand-gold'
+                        }`}
+                    >
+                      <item.icon className="w-5 h-5 flex-shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            <div className="p-6 border-t border-[#222] bg-black/20">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-3 px-4 py-4 text-sm font-bold text-red-500 bg-red-950/20 rounded-xl"
+              >
+                <LogOut className="w-5 h-5" />
+                Cerrar Sesión del Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ======================================= */}
       {/* AREA PRINCIPAL DE TRABAJO */}
