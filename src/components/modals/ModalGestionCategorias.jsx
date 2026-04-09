@@ -3,7 +3,7 @@ import { X, ListTree, Edit2, Trash2, Plus, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function CategoryManagerModal({ isOpen, onClose, categories, setCategories }) {
+export default function ModalGestionCategorias({ isOpen, onClose, categories, setCategories }) {
   const [isAddMode, setIsAddMode] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   

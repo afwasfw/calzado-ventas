@@ -3,7 +3,7 @@ import { X, PackageCheck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function NewBatchModal({ isOpen, onClose, shoeDatabase = [], onSuccess }) {
+export default function ModalNuevoLote({ isOpen, onClose, shoeDatabase = [], onSuccess }) {
   if (!isOpen) return null;
 
   const [selectedShoeId, setSelectedShoeId] = useState('');

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, TrendingDown, Settings, MessageCircle, ArrowRight } from 'lucide-react';
-import ManualOrderModal from '../modals/ManualOrderModal';
-import StockAdjustmentModal from '../modals/StockAdjustmentModal';
+import ModalPedidoManual from '../modals/ModalPedidoManual';
+import ModalAjusteStock from '../modals/ModalAjusteStock';
+
 import { supabase } from '../../lib/supabase';
 
-export default function OverviewTab({ session }) {
+export default function TabResumen({ session }) {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
 
@@ -184,7 +185,7 @@ export default function OverviewTab({ session }) {
       </div>
 
       {/* RENDERIZADO CONDICIONAL DE LOS MODALES */}
-      <ManualOrderModal 
+      <ModalPedidoManual 
         isOpen={isOrderModalOpen} 
         onClose={() => setIsOrderModalOpen(false)} 
         catalog={stats.catalog}
@@ -193,10 +194,11 @@ export default function OverviewTab({ session }) {
           loadStats();
         }}
       />
-      <StockAdjustmentModal 
+      <ModalAjusteStock 
         isOpen={isStockModalOpen} 
         onClose={() => setIsStockModalOpen(false)} 
       />
+
     </>
   );
 }

@@ -3,7 +3,7 @@ import { X, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function MaterialRegistrationModal({ isOpen, onClose, onSuccess, categories = [], units = [] }) {
+export default function ModalRegistroMaterial({ isOpen, onClose, onSuccess, categories = [], units = [] }) {
   const [formData, setFormData] = useState({
     nombre: '',
     categoria: '',

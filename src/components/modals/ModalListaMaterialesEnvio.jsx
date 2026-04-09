@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Beaker, FileBox, Calculator, Trash2 } from 'lucide-react';
 
-export default function RecipeBOMModal({ isOpen, onClose, shoeData, onDelete }) {
+export default function ModalListaMaterialesEnvio({ isOpen, onClose, shoeData, onDelete }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   if (!isOpen || !shoeData) return null;

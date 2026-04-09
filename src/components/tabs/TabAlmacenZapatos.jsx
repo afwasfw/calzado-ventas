@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Eye } from 'lucide-react';
-import NewBatchModal from '../modals/NewBatchModal';
-import FinishedGoodDetailsModal from '../modals/FinishedGoodDetailsModal';
+import ModalNuevoLote from '../modals/ModalNuevoLote';
+import ModalDetalleProductoTerminado from '../modals/ModalDetalleProductoTerminado';
+
 import { supabase } from '../../lib/supabase';
 
-export default function FinishedGoodsTab() {
+export default function TabAlmacenZapatos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isBatchOpen, setIsBatchOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -170,7 +171,7 @@ export default function FinishedGoodsTab() {
         
       </div>
 
-      <NewBatchModal 
+      <ModalNuevoLote 
         isOpen={isBatchOpen} 
         onClose={() => setIsBatchOpen(false)} 
         shoeDatabase={finishedGoods}
@@ -180,11 +181,12 @@ export default function FinishedGoodsTab() {
         }}
       />
       
-      <FinishedGoodDetailsModal 
+      <ModalDetalleProductoTerminado 
         isOpen={isDetailsOpen} 
         onClose={() => setIsDetailsOpen(false)} 
         goodData={selectedGood}
       />
+
     </>
   );
 }

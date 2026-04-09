@@ -3,7 +3,7 @@ import { X, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function StockAdjustmentModal({ isOpen, onClose, inventory = [], preselectedItem = null, onSuccess }) {
+export default function ModalAjusteStock({ isOpen, onClose, inventory = [], preselectedItem = null, onSuccess }) {
   const [selectedItemId, setSelectedItemId] = useState('');
   const [operation, setOperation] = useState('add');
   const [amount, setAmount] = useState('');

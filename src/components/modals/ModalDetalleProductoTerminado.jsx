@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Tag, Edit3, Image as ImageIcon } from 'lucide-react';
 
-export default function FinishedGoodDetailsModal({ isOpen, onClose }) {
+export default function ModalDetalleProductoTerminado({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (

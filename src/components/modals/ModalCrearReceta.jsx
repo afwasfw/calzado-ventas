@@ -4,7 +4,7 @@ import { X, Save, Plus, Trash2, Beaker } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function CreateRecipeModal({ isOpen, onClose, categories = [], units = [], materials = [], onSuccess }) {
+export default function ModalCrearReceta({ isOpen, onClose, categories = [], units = [], materials = [], onSuccess }) {
   // Estado local
   const [formData, setFormData] = useState({
     codigo_modelo: '',

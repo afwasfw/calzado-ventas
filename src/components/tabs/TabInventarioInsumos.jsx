@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Plus, MoreHorizontal } from 'lucide-react';
-import MaterialRegistrationModal from '../modals/MaterialRegistrationModal';
-import StockAdjustmentModal from '../modals/StockAdjustmentModal';
-import CategoryManagerModal from '../modals/CategoryManagerModal';
-import UnitManagerModal from '../modals/UnitManagerModal';
+import ModalRegistroMaterial from '../modals/ModalRegistroMaterial';
+import ModalAjusteStock from '../modals/ModalAjusteStock';
+import ModalGestionCategorias from '../modals/ModalGestionCategorias';
+import ModalGestionUnidades from '../modals/ModalGestionUnidades';
+
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function InventoryTab() {
+export default function TabInventarioInsumos() {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
@@ -358,7 +359,7 @@ export default function InventoryTab() {
       </div>
 
       {/* RENDERIZADO CONDICIONAL DE LOS MODALES */}
-      <MaterialRegistrationModal 
+      <ModalRegistroMaterial 
         isOpen={isRegistrationOpen} 
         onClose={() => setIsRegistrationOpen(false)} 
         onSuccess={() => {
@@ -372,7 +373,7 @@ export default function InventoryTab() {
       {/* BOTON GENERICO PARA ABRIR MODAL STOCK TOTAL */}
       {/* Nota: InventoryTab no tiene botón genérico de Ajustar Stock, solo en la fila de 3 puntos */}
 
-      <StockAdjustmentModal 
+      <ModalAjusteStock 
         isOpen={adjustmentItem !== null} 
         onClose={() => setAdjustmentItem(null)} 
         inventory={inventory}
@@ -383,19 +384,20 @@ export default function InventoryTab() {
         }}
       />
       
-      <CategoryManagerModal 
+      <ModalGestionCategorias 
         isOpen={isCategoryModalOpen} 
         onClose={() => setIsCategoryModalOpen(false)} 
         categories={categories}
         setCategories={setCategories}
       />
       
-      <UnitManagerModal 
+      <ModalGestionUnidades 
         isOpen={isUnitModalOpen} 
         onClose={() => setIsUnitModalOpen(false)} 
         units={units}
         setUnits={setUnits}
       />
+
     </>
   );
 }

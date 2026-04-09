@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Info, Plus } from 'lucide-react';
-import RecipeBOMModal from '../modals/RecipeBOMModal';
-import CreateRecipeModal from '../modals/CreateRecipeModal';
+import ModalListaMaterialesEnvio from '../modals/ModalListaMaterialesEnvio';
+import ModalCrearReceta from '../modals/ModalCrearReceta';
+
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function ShoeRecipesTab() {
+export default function TabRecetasProduccion() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShoe, setSelectedShoe] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -193,7 +194,7 @@ export default function ShoeRecipesTab() {
       </div>
 
       {/* Renderizado condicional del Modal pasándole el Zapato en turno */}
-      <RecipeBOMModal 
+      <ModalListaMaterialesEnvio 
         isOpen={selectedShoe !== null} 
         onClose={() => setSelectedShoe(null)} 
         shoeData={selectedShoe}
@@ -210,8 +211,9 @@ export default function ShoeRecipesTab() {
           }
         }}
       />
+
       {/* Renderizado condicional del Modal de Creación */}
-      <CreateRecipeModal 
+      <ModalCrearReceta 
         isOpen={isCreateModalOpen} 
         onClose={() => setIsCreateModalOpen(false)} 
         categories={categories}
@@ -222,6 +224,7 @@ export default function ShoeRecipesTab() {
           fetchRecipesAndCategories();
         }}
       />
+
     </>
   );
 }

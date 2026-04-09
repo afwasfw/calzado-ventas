@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Settings, 
-  LogOut, 
-  Menu, 
+import {
+  LayoutDashboard,
+  Package,
+  Settings,
+  LogOut,
+  Menu,
   X,
   Archive
 } from 'lucide-react';
-import OverviewTab from './tabs/OverviewTab';
-import InventoryTab from './tabs/InventoryTab';
-import FinishedGoodsTab from './tabs/FinishedGoodsTab';
-import ShoeRecipesTab from './tabs/ShoeRecipesTab';
-import OrdersTab from './tabs/OrdersTab';
+import TabResumen from './tabs/TabResumen';
+import TabInventarioInsumos from './tabs/TabInventarioInsumos';
+import TabAlmacenZapatos from './tabs/TabAlmacenZapatos';
+import TabRecetasProduccion from './tabs/TabRecetasProduccion';
+import TabGestionPedidos from './tabs/TabGestionPedidos';
+
+
 
 export default function DashboardLayout({ session, handleLogout }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -29,9 +31,9 @@ export default function DashboardLayout({ session, handleLogout }) {
 
   return (
     <div className="flex h-screen w-full bg-[#111111] overflow-hidden">
-      
+
       {/* ======================================= */}
-      {/* SIDEBAR ESCRITORIO (Y TABLET RESPONSIVO) */}
+      {/* SIDEBAR ESCRITORIO RESPONSIVO*/}
       {/* ======================================= */}
       <aside className={`hidden md:flex flex-col bg-[#161616] border-r border-[#222] z-10 transition-all duration-500 ease-in-out shadow-2xl shadow-brand-gold/5 
         ${isSidebarCollapsed ? 'w-24' : 'w-72'}`}
@@ -40,11 +42,11 @@ export default function DashboardLayout({ session, handleLogout }) {
         <div className={`p-6 flex flex-col items-center border-b border-[#222] relative transition-all duration-500
           ${isSidebarCollapsed ? 'pb-8' : 'p-8'}`}
         >
-          <img 
-            src="/logo_base.png" 
-            alt="Emssa Valems" 
+          <img
+            src="/logo_base.png"
+            alt="Emssa Valems"
             className={`transition-all duration-500 drop-shadow-[0_0px_10px_rgba(212,178,113,0.15)]
-              ${isSidebarCollapsed ? 'w-10 mb-0' : 'w-16 mb-4'}`} 
+              ${isSidebarCollapsed ? 'w-10 mb-0' : 'w-16 mb-4'}`}
           />
           {!isSidebarCollapsed && (
             <div className="text-center animate-fade-in">
@@ -54,7 +56,7 @@ export default function DashboardLayout({ session, handleLogout }) {
           )}
 
           {/* Botón para colapsar (Desktop) */}
-          <button 
+          <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             className="absolute -right-3 top-1/2 -translate-y-1/2 bg-brand-gold text-black rounded-full p-1 shadow-xl hover:scale-110 transition-transform z-20"
           >
@@ -71,8 +73,8 @@ export default function DashboardLayout({ session, handleLogout }) {
                   title={isSidebarCollapsed ? item.label : ''}
                   className={`w-full flex items-center transition-all duration-300 font-medium text-sm rounded-xl py-3.5
                     ${isSidebarCollapsed ? 'justify-center px-0' : 'gap-4 px-4'}
-                    ${activeTab === item.id 
-                      ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' 
+                    ${activeTab === item.id
+                      ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20'
                       : 'text-gray-400 hover:bg-brand-gold/10 hover:text-brand-gold'
                     }`}
                 >
@@ -85,7 +87,7 @@ export default function DashboardLayout({ session, handleLogout }) {
         </nav>
 
         <div className={`p-4 border-t border-[#222] transition-all duration-500 ${isSidebarCollapsed ? 'items-center' : ''}`}>
-          <button 
+          <button
             onClick={handleLogout}
             title={isSidebarCollapsed ? 'Cerrar Sesión' : ''}
             className={`w-full flex items-center text-sm font-medium text-red-500 hover:bg-red-950/30 rounded-xl transition-all py-3
@@ -97,8 +99,10 @@ export default function DashboardLayout({ session, handleLogout }) {
         </div>
       </aside>
 
+
+
       {/* ======================================= */}
-      {/* MENÚ MÓVIL (Mismo código optimizado) */}
+      {/* MENÚ MÓVIL*/}
       {/* ======================================= */}
       <div className="md:hidden fixed top-0 w-full bg-[#161616] border-b border-[#222] px-4 py-4 z-50 flex justify-between items-center shadow-sm">
         <div className="flex items-center gap-3">
@@ -114,17 +118,17 @@ export default function DashboardLayout({ session, handleLogout }) {
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-[60] animate-fade-in">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/80 backdrop-blur-sm"
             onClick={() => setIsMobileMenuOpen(false)}
           ></div>
-          
+
           {/* Content */}
           <div className="absolute top-0 right-0 w-4/5 max-w-sm h-full bg-[#161616] shadow-2xl flex flex-col animate-slide-in-right border-l border-[#333]">
             <div className="p-8 flex flex-col items-center border-b border-[#222] bg-black/20">
               <img src="/logo_base.png" alt="Emssa Valems" className="w-14 mb-4" />
               <h2 className="text-lg font-serif tracking-widest text-white uppercase font-bold text-center">Emssa Valems</h2>
-              <button 
+              <button
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white"
               >
@@ -142,8 +146,8 @@ export default function DashboardLayout({ session, handleLogout }) {
                         setIsMobileMenuOpen(false);
                       }}
                       className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl transition-all font-bold text-sm
-                        ${activeTab === item.id 
-                          ? 'bg-brand-gold text-black shadow-lg translate-x-1' 
+                        ${activeTab === item.id
+                          ? 'bg-brand-gold text-black shadow-lg translate-x-1'
                           : 'text-gray-400 active:bg-brand-gold/10 active:text-brand-gold'
                         }`}
                     >
@@ -156,7 +160,7 @@ export default function DashboardLayout({ session, handleLogout }) {
             </nav>
 
             <div className="p-6 border-t border-[#222] bg-black/20">
-              <button 
+              <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-3 px-4 py-4 text-sm font-bold text-red-500 bg-red-950/20 rounded-xl"
               >
@@ -177,16 +181,17 @@ export default function DashboardLayout({ session, handleLogout }) {
         {/* ------------------------------------- */}
         {/* RUTEADOR CONDICIONAL DE PESTAÑAS      */}
         {/* ------------------------------------- */}
-        
-        {activeTab === 'resumen' && <OverviewTab session={session} />}
-        
-        {activeTab === 'pedidos' && <OrdersTab />}
-        
-        {activeTab === 'almacen' && <FinishedGoodsTab />}
-        
-        {activeTab === 'inventario' && <InventoryTab />}
 
-        {activeTab === 'recetario' && <ShoeRecipesTab />}
+        {activeTab === 'resumen' && <TabResumen session={session} />}
+
+        {activeTab === 'pedidos' && <TabGestionPedidos />}
+
+        {activeTab === 'almacen' && <TabAlmacenZapatos />}
+
+        {activeTab === 'inventario' && <TabInventarioInsumos />}
+
+        {activeTab === 'recetario' && <TabRecetasProduccion />}
+
 
       </main>
 

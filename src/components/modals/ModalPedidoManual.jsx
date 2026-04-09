@@ -3,7 +3,7 @@ import { X, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function ManualOrderModal({ isOpen, onClose, catalog = [], onSuccess }) {
+export default function ModalPedidoManual({ isOpen, onClose, catalog = [], onSuccess }) {
   const [formData, setFormData] = useState({
     cliente: '',
     producto_id: '',

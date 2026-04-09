@@ -3,7 +3,7 @@ import { X, Scale, Edit2, Trash2, Plus, Save } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function UnitManagerModal({ isOpen, onClose, units, setUnits }) {
+export default function ModalGestionUnidades({ isOpen, onClose, units, setUnits }) {
   const [isAddMode, setIsAddMode] = useState(false);
   const [newUnitName, setNewUnitName] = useState('');
   

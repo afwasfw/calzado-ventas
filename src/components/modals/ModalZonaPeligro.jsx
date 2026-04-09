@@ -3,7 +3,7 @@ import { Trash2, AlertTriangle, Database, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function DangerZoneModal({ isOpen, onClose }) {
+export default function ModalZonaPeligro({ isOpen, onClose }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState('');
 

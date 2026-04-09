@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, CheckCircle2, Clock, Truck, Factory, XCircle, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
-import ManualOrderModal from '../modals/ManualOrderModal';
+import ModalPedidoManual from '../modals/ModalPedidoManual';
 
-export default function OrdersTab() {
+export default function TabGestionPedidos() {
   const [orders, setOrders] = useState([]);
   const [catalog, setCatalog] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -98,10 +98,6 @@ export default function OrdersTab() {
       setUpdatingId(null);
     }
   };
-
-  useEffect(() => {
-    fetchOrdersAndCatalog();
-  }, []);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -309,7 +305,7 @@ export default function OrdersTab() {
       </div>
       
       {/* RENDERIZADO CONDICIONAL DE LOS MODALES */}
-      <ManualOrderModal 
+      <ModalPedidoManual 
         isOpen={isOrderModalOpen} 
         onClose={() => setIsOrderModalOpen(false)} 
         catalog={catalog}
