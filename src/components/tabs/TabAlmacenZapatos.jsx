@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Eye } from 'lucide-react';
 import ModalNuevoLote from '../modals/ModalNuevoLote';
 import ModalDetalleProductoTerminado from '../modals/ModalDetalleProductoTerminado';
+import ModalGestionCategoriasCalzado from '../modals/ModalGestionCategoriasCalzado';
+
 
 import { supabase } from '../../lib/supabase';
 
@@ -9,9 +11,11 @@ export default function TabAlmacenZapatos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isBatchOpen, setIsBatchOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [selectedGood, setSelectedGood] = useState(null);
   const [finishedGoods, setFinishedGoods] = useState([]);
   const [loading, setLoading] = useState(true);
+
 
   const fetchFinishedGoods = async () => {
     try {
@@ -60,15 +64,24 @@ export default function TabAlmacenZapatos() {
             </p>
           </div>
           
-          {/* BOTON DE ACCION */}
-          <button 
-            onClick={() => setIsBatchOpen(true)}
-            className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20b858] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(37,211,102,0.2)]"
-          >
-            <Plus className="w-5 h-5" />
-            Ingresar Nuevo Lote
-          </button>
+          {/* BOTONES DE ACCION */}
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsCategoryOpen(true)}
+              className="flex items-center gap-2 bg-[#1a1a1a] border border-[#333] text-gray-300 hover:text-brand-gold hover:border-brand-gold/50 px-5 py-3 rounded-xl transition-colors shrink-0 font-bold"
+            >
+              Categorías
+            </button>
+            <button 
+              onClick={() => setIsBatchOpen(true)}
+              className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20b858] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(37,211,102,0.2)]"
+            >
+              <Plus className="w-5 h-5" />
+              Ingresar Nuevo Lote
+            </button>
+          </div>
         </div>
+
 
         {/* BARRA DE BÚSQUEDA UNIVERSAL */}
         <div className="mb-8">
@@ -98,6 +111,7 @@ export default function TabAlmacenZapatos() {
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Tipo de Taco</th>
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Serie</th>
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-[#25D366] font-semibold text-center">Stock (Docenas)</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-center">Mano Obra (S/)</th>
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold text-center">Acciones</th>
                 </tr>
               </thead>
@@ -150,6 +164,13 @@ export default function TabAlmacenZapatos() {
                         </div>
                       </td>
 
+                      {/* MANO DE OBRA */}
+                      <td className="py-4 px-6 text-center">
+                        <span className="font-mono text-sm font-bold text-white">
+                          S/ {(item.costo_mano_obra_docena || 0).toFixed(2)}
+                        </span>
+                      </td>
+
                       {/* ACCIONES */}
                       <td className="py-4 px-6">
                         <div className="flex justify-center">
@@ -185,7 +206,15 @@ export default function TabAlmacenZapatos() {
         isOpen={isDetailsOpen} 
         onClose={() => setIsDetailsOpen(false)} 
         goodData={selectedGood}
+        onSuccess={fetchFinishedGoods}
       />
+
+      <ModalGestionCategoriasCalzado 
+        isOpen={isCategoryOpen}
+        onClose={() => setIsCategoryOpen(false)}
+        onUpdate={fetchFinishedGoods}
+      />
+
 
     </>
   );

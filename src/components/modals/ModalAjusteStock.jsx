@@ -7,8 +7,10 @@ export default function ModalAjusteStock({ isOpen, onClose, inventory = [], pres
   const [selectedItemId, setSelectedItemId] = useState('');
   const [operation, setOperation] = useState('add');
   const [amount, setAmount] = useState('');
+  const [totalCost, setTotalCost] = useState('');
   const [note, setNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
 
   // Set the default if preselected item comes down
   useEffect(() => {
@@ -20,8 +22,10 @@ export default function ModalAjusteStock({ isOpen, onClose, inventory = [], pres
     } else if (isOpen) {
       setSelectedItemId('');
       setAmount('');
+      setTotalCost('');
       setNote('');
     }
+
   }, [preselectedItem, isOpen]);
 
   if (!isOpen) return null;
@@ -43,22 +47,48 @@ export default function ModalAjusteStock({ isOpen, onClose, inventory = [], pres
       const diff = operation === 'add' ? numAmount : -numAmount;
       const newStock = parseFloat(item.stock_actual) + diff;
 
+      let finalCostoUnitario = item.costo_unitario || 0;
+
       if (newStock < 0) {
         toast.error(`No puedes dejar stock negativo. (Stock actual: ${item.stock_actual})`);
         return;
       }
 
+      // --- CÁLCULO DE COSTO PROMEDIO (Si es ingreso) ---
+      if (operation === 'add' && totalCost && parseFloat(totalCost) > 0) {
+        const nuevoCostoTotal = (parseFloat(item.costo_unitario || 0) * parseFloat(item.stock_actual)) + parseFloat(totalCost);
+        finalCostoUnitario = nuevoCostoTotal / newStock;
+      }
+
       // Actualizar en base de datos
       const { error } = await supabase
         .from('inventario_materiales')
-        .update({ stock_actual: newStock })
+        .update({ 
+          stock_actual: newStock,
+          costo_unitario: finalCostoUnitario
+        })
         .eq('id', selectedItemId);
 
       if (error) throw error;
 
-      toast.success(`Movimiento guardado. El nuevo stock de ${item.nombre} es ${newStock} ${item.unidad_medida}.`);
+      // --- REGISTRO DE AUDITORÍA ---
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('auditoria_inventario').insert({
+        tipo_entidad: 'INSUMO',
+        entidad_id: selectedItemId,
+        nombre_entidad: item.nombre,
+        cantidad: diff,
+        stock_final: newStock,
+        costo_unitario_movimiento: operation === 'add' ? (totalCost ? parseFloat(totalCost) / numAmount : item.costo_unitario) : item.costo_unitario,
+        valor_total_movimiento: operation === 'add' ? (totalCost ? parseFloat(totalCost) : numAmount * (item.costo_unitario || 0)) : (diff * (item.costo_unitario || 0)),
+        motivo: note || (operation === 'add' ? 'Ingreso Manual' : 'Ajuste / Salida'),
+        usuario_email: user?.email || 'Sistema'
+      });
+
+      toast.success(`Movimiento guardado. Precio prom: S/ ${finalCostoUnitario.toFixed(2)}`);
       if (onSuccess) onSuccess();
       else onClose();
+
 
     } catch (err) {
       console.error('Error al actualizar stock:', err.message);
@@ -123,6 +153,22 @@ export default function ModalAjusteStock({ isOpen, onClose, inventory = [], pres
               />
             </div>
           </div>
+
+          {operation === 'add' && (
+            <div className="animate-fade-in-down">
+              <label className="block text-xs font-bold text-brand-gold uppercase tracking-wider mb-2">Costo Total de la Compra (S/)</label>
+              <input 
+                type="number" 
+                step="any"
+                value={totalCost}
+                onChange={(e) => setTotalCost(e.target.value)}
+                className="w-full bg-[#1a1305] border border-brand-gold/30 rounded-xl px-4 py-3 text-brand-gold focus:outline-none focus:border-brand-gold transition-colors font-sans text-lg font-bold" 
+                placeholder="Ej: 500.00" 
+              />
+              <p className="text-[10px] text-gray-500 mt-1 italic">Si lo dejas vacío, usará el costo promedio anterior.</p>
+            </div>
+          )}
+
 
           <div>
             <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nota / Justificación (Opcional)</label>

@@ -12,8 +12,12 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
     precio: '',
     color: '',
     taco: '',
-    serie: ''
+    serie: '',
+    categoria_id: ''
   });
+  
+  const [shoeCategories, setShoeCategories] = useState([]);
+
   
   const [fotoBase64, setFotoBase64] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,7 +26,19 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
     { category: '', name: '', amount: '', unit: '' }
   ]);
 
+  const fetchShoeCategories = async () => {
+    const { data } = await supabase.from('categorias_calzado').select('*').order('nombre');
+    setShoeCategories(data || []);
+  };
+
+  React.useEffect(() => {
+    if (isOpen) {
+      fetchShoeCategories();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
 
   const addIngredientRow = () => {
     setIngredients([...ingredients, { category: '', name: '', amount: '', unit: '' }]);
@@ -70,10 +86,11 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.codigo_modelo || !formData.nombre || !formData.precio || !formData.color || !formData.taco || !formData.serie) {
-      toast.error("Llena todos los campos comerciales y atributos del modelo.");
+    if (!formData.codigo_modelo || !formData.nombre || !formData.precio || !formData.color || !formData.taco || !formData.serie || !formData.categoria_id) {
+      toast.error("Llena todos los campos comerciales, atributos y categoría del modelo.");
       return;
     }
+
     
     // Validate ingredients
     const validIngredients = ingredients.filter(i => i.name && i.amount);
@@ -85,6 +102,10 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
     try {
       setIsSubmitting(true);
       
+      // 0. Obtener el costo de mano de obra de la categoría seleccionada
+      const selectedCat = shoeCategories.find(c => c.id === formData.categoria_id);
+      const laborCost = selectedCat ? selectedCat.costo_mano_obra_docena : 0;
+
       // 1. Crear el producto final (Modelo Base)
       const { data: nProducto, error: pError } = await supabase
         .from('productos_finales')
@@ -94,12 +115,15 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
           color_fisico: formData.color,
           taco: formData.taco,
           serie: formData.serie,
+          categoria_id: formData.categoria_id,
+          costo_mano_obra_docena: laborCost,
           precio_docena_mayorista: parseFloat(formData.precio),
           stock_docenas: 0,
           foto_url: fotoBase64 || null
         }])
         .select('id')
         .single();
+
         
       if (pError) throw pError;
       
@@ -117,7 +141,8 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
       if (rError) throw rError;
 
       toast.success(`Modelo ${formData.codigo_modelo} y su receta de ${recipeInserts.length} insumos creada exitosamente.`);
-      setFormData({ codigo_modelo: '', nombre: '', precio: '', color: '', taco: '', serie: '' });
+      setFormData({ codigo_modelo: '', nombre: '', precio: '', color: '', taco: '', serie: '', categoria_id: '' });
+
       setIngredients([{ category: '', name: '', amount: '', unit: '' }]);
       setFotoBase64(null);
       
@@ -192,8 +217,22 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Serie de Tallas Cubiertas</label>
                 <input type="text" value={formData.serie} onChange={(e) => setFormData({...formData, serie: e.target.value})} className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-gray-300 focus:outline-none focus:border-brand-peach transition-colors" placeholder="Ej: 35-39, 39-44..." />
               </div>
+              <div className="md:col-span-3">
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Categoría Productiva (Mano de Obra)</label>
+                <select 
+                  value={formData.categoria_id} 
+                  onChange={(e) => setFormData({...formData, categoria_id: e.target.value})}
+                  className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-brand-peach transition-colors appearance-none"
+                >
+                  <option value="">Selecciona Categoría...</option>
+                  {shoeCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.nombre} (S/ {cat.costo_mano_obra_docena} p/doc)</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
+
 
           {/* BLOQUE 2: B.O.M / Constructor de Receta */}
           <div className="bg-[#111] border border-[#222] rounded-xl overflow-hidden">

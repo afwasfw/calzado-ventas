@@ -141,6 +141,16 @@ export default function TabInventarioInsumos() {
               Control general de materia prima segmentada por categorías.
             </p>
           </div>
+
+          <div className="flex flex-col items-end">
+            <div className="bg-[#1a1a1a] border border-[#333] px-6 py-4 rounded-2xl shadow-xl shadow-black/50">
+              <span className="text-[10px] text-brand-gold font-bold uppercase tracking-[0.2em] mb-1 block">Inversión en Insumos</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-white">S/ {inventory.reduce((sum, item) => sum + ((item.stock_actual || 0) * (item.costo_unitario || 0)), 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </div>
+
           
           {/* BOTON DE ACCION PRINCIPAL */}
           <button 
@@ -215,8 +225,11 @@ export default function TabInventarioInsumos() {
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold">Material / Insumo</th>
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold">Categoría Asignada</th>
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-right">Stock Actual</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-right">Costo Unit.</th>
+                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-right">Total (S/)</th>
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-center">Estado</th>
                   <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-center">Acciones</th>
+
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#222]">
@@ -244,6 +257,12 @@ export default function TabInventarioInsumos() {
                         <span className="text-xs text-gray-400 ml-1">{item.unidad_medida}</span>
                       </div>
                     </td>
+                    <td className="py-4 px-6 text-right font-mono text-sm text-gray-300">
+                      S/ {(item.costo_unitario || 0).toFixed(2)}
+                    </td>
+                    <td className="py-4 px-6 text-right font-bold text-white">
+                      S/ {((item.stock_actual || 0) * (item.costo_unitario || 0)).toFixed(2)}
+                    </td>
                     <td className="py-4 px-6">
                       <div className="flex justify-center">
                         <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border border-transparent ${getStatusStyle(item.stock_actual, item.stock_alerta)}`}>
@@ -251,6 +270,7 @@ export default function TabInventarioInsumos() {
                         </span>
                       </div>
                     </td>
+
                     <td className="py-4 px-6">
                       <div className="flex justify-center relative">
                         <button 

@@ -13,9 +13,12 @@ export default function TabResumen({ session }) {
     pendingOrders: 0,
     criticalMaterials: 0,
     totalModels: 0,
+    totalProfit: 0,
+    totalRevenue: 0,
     recentOrders: [],
     catalog: []
   });
+
 
   const loadStats = async () => {
       try {
@@ -33,6 +36,22 @@ export default function TabResumen({ session }) {
         
         const criticalCount = (materiales || []).filter(m => m.stock_actual <= m.stock_alerta).length;
 
+        // Ganancia Real (Ventas - Costos del Kárdex)
+        const { data: auditData } = await supabase
+          .from('auditoria_inventario')
+          .select('valor_total_movimiento')
+          .eq('tipo_entidad', 'PRODUCTO_FINAL')
+          .lt('cantidad', 0); // Solo las salidas (ventas)
+
+        const totalCosts = (auditData || []).reduce((sum, move) => sum + Math.abs(move.valor_total_movimiento || 0), 0);
+        
+        const { data: allOrders } = await supabase
+          .from('pedidos')
+          .select('total_venta')
+          .eq('estado', 'Entregado');
+        
+        const totalRevenue = (allOrders || []).reduce((sum, o) => sum + (o.total_venta || 0), 0);
+
         // Catálogo entero en vez de count limitante
         const { data: modelsData } = await supabase
           .from('productos_finales')
@@ -43,6 +62,8 @@ export default function TabResumen({ session }) {
           pendingOrders: pedidos?.length || 0,
           criticalMaterials: criticalCount,
           totalModels: modelsData?.length || 0,
+          totalProfit: totalRevenue - totalCosts,
+          totalRevenue: totalRevenue,
           recentOrders: pedidos?.slice(0, 5) || [],
           catalog: modelsData || []
         });
@@ -96,15 +117,21 @@ export default function TabResumen({ session }) {
             </p>
           </div>
 
-          <div className="bg-[#1a1a1a] border border-[#333] p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all shadow-brand-gold/5 group">
+          <div className="bg-[#1a1a1a] border border-[#333] p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all shadow-green-500/10 group">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-blue-900/20 rounded-xl text-blue-400">
-                <Settings className="w-6 h-6" />
+              <div className="p-3 bg-green-500/10 rounded-xl text-green-500">
+                <TrendingDown className="rotate-180 w-6 h-6" />
               </div>
             </div>
-            <p className="text-sm font-medium text-gray-400">Fichas Técnicas Activas</p>
-            <h3 className="text-3xl font-sans font-extrabold text-white mt-1 uppercase tracking-tight">{stats.totalModels} Modelos</h3>
+            <p className="text-sm font-medium text-gray-400">Ganancia Estimada (Histórica)</p>
+            <h3 className="text-3xl font-sans font-extrabold text-[#25D366] mt-1 uppercase tracking-tight">
+              S/ {stats.totalProfit.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+            </h3>
+            <p className="text-xs mt-2 font-medium text-gray-500">
+              Ventas: S/ {stats.totalRevenue.toLocaleString('es-PE')}
+            </p>
           </div>
+
         </div>
 
         {/* 2. SPLIT VIEW: TABLAS DE ACTIVIDAD */}

@@ -81,6 +81,27 @@ export default function TabGestionPedidos() {
           .eq('id', order.producto_id);
           
         if (stockErr) throw stockErr;
+
+        // --- REGISTRO DE AUDITORÍA DE VENTA VALORIZADA ---
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Asignamos el costo unitario basado en la última valorización (Mano obra + Insumos)
+        // Para simplificar en este punto, usamos el costo_mano_obra_docena que ya integra el modelo
+        const costoProduccionUnitario = product.costo_mano_obra_docena || 0;
+
+        await supabase.from('auditoria_inventario').insert({
+          tipo_entidad: 'PRODUCTO_FINAL',
+          entidad_id: order.producto_id,
+          nombre_entidad: product.nombre,
+          cantidad: -order.cantidad_docenas,
+          stock_final: product.stock_docenas - order.cantidad_docenas,
+          costo_unitario_movimiento: costoProduccionUnitario,
+          valor_total_movimiento: -(costoProduccionUnitario * order.cantidad_docenas),
+          motivo: `Venta Entregada: ${order.cliente_whatsapp}`,
+          referencia_operacion: `PED-${order.id.split('-')[0].toUpperCase()}`,
+          usuario_email: user?.email || 'Sistema'
+        });
+
       }
 
       const { error } = await supabase

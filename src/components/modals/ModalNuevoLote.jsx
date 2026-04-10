@@ -60,12 +60,26 @@ export default function ModalNuevoLote({ isOpen, onClose, shoeDatabase = [], onS
 
         // 2.5 VALIDAR QUE HAYA STOCK SUFICIENTE
         const insufficientMaterials = [];
+        const logsInsumos = []; // Preparar logs para auditoría
+
         recipeData.forEach(req => {
           const mat = materialsData?.find(m => m.id === req.material_id);
           if (mat) {
             const gastoTotal = parseFloat(req.cantidad_por_docena) * cantDocenas;
+            const nuevoStockInsumo = parseFloat(mat.stock_actual) - gastoTotal;
+
             if (mat.stock_actual < gastoTotal) {
               insufficientMaterials.push(`${mat.nombre} (Faltan ${(gastoTotal - mat.stock_actual).toFixed(2)})`);
+            } else {
+              logsInsumos.push({
+                tipo_entidad: 'INSUMO',
+                entidad_id: mat.id,
+                nombre_entidad: mat.nombre,
+                cantidad: -gastoTotal,
+                stock_final: nuevoStockInsumo,
+                motivo: `Consumo Producción: ${selectedShoe.codigo_modelo}`,
+                usuario_email: 'Sistema'
+              });
             }
           }
         });
@@ -77,25 +91,35 @@ export default function ModalNuevoLote({ isOpen, onClose, shoeDatabase = [], onS
         }
 
         // Armar el lote de actualizaciones a disminuir
-        const stockUpdates = recipeData.map(req => {
-          const mat = materialsData?.find(m => m.id === req.material_id);
-          if (mat) {
-            const gastoTotal = parseFloat(req.cantidad_por_docena) * cantDocenas;
-            const nuevoStockInsumo = parseFloat(mat.stock_actual) - gastoTotal;
-            
-            return supabase
-              .from('inventario_materiales')
-              .update({ stock_actual: nuevoStockInsumo })
-              .eq('id', mat.id);
-          }
-          return null;
-        }).filter(Boolean);
+        const stockUpdates = logsInsumos.map(log => {
+          return supabase
+            .from('inventario_materiales')
+            .update({ stock_actual: log.stock_final })
+            .eq('id', log.entidad_id);
+        });
 
         // Ejecutarlos en paralelo
         await Promise.all(stockUpdates);
+        
+        // Guardar logs de insumos
+        const batchRef = `LOT-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+        
+        const logsInsumosFinal = logsInsumos.map(log => ({
+          ...log,
+          referencia_operacion: batchRef
+        }));
+
+        await supabase.from('auditoria_inventario').insert(logsInsumosFinal);
       }
 
-      // 3. ENTRADA DEL ALMACEN DEL ZAPATO TERMINADO
+      // 3. CALCULAR COSTO TOTAL DE PRODUCCIÓN (INSUMOS + MANO DE OBRA)
+      const totalMaterialCost = logsInsumos.reduce((sum, log) => sum + Math.abs(log.valor_total_movimiento || 0), 0) / (cantDocenas || 1);
+      const totalProductionCost = totalMaterialCost + (selectedShoe.costo_mano_obra_docena || 0);
+      
+      // Re-generar batchRef si no hubo insumos (raro pero posible)
+      const finalBatchRef = `LOT-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+      // 4. ENTRADA DEL ALMACEN DEL ZAPATO TERMINADO
       const newStock = parseFloat(selectedShoe.stock_docenas) + cantDocenas;
 
       const { error: finalErr } = await supabase
@@ -104,10 +128,27 @@ export default function ModalNuevoLote({ isOpen, onClose, shoeDatabase = [], onS
         .eq('id', selectedShoe.id);
 
       if (finalErr) throw finalErr;
+
+      // 5. AUDITORIA DEL ZAPATO TERMINADO CON COSTO INTEGRAL Y REFERENCIA
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('auditoria_inventario').insert({
+        tipo_entidad: 'PRODUCTO_FINAL',
+        entidad_id: selectedShoe.id,
+        nombre_entidad: selectedShoe.nombre,
+        cantidad: cantDocenas,
+        stock_final: newStock,
+        costo_unitario_movimiento: totalProductionCost,
+        valor_total_movimiento: totalProductionCost * cantDocenas,
+        referencia_operacion: logsInsumos.length > 0 ? logsInsumos[0].referencia_operacion : finalBatchRef,
+        motivo: notas || 'Ingreso de Producción',
+        usuario_email: user?.email || 'Sistema'
+      });
+
       
-      toast.success(`Se ingresaron ${cantDocenas} docenas de ${selectedShoe.codigo_modelo} y se descontó la materia prima del inventario central.`);
+      toast.success(`Lote ingresado. Costo Fab: S/ ${totalProductionCost.toFixed(2)} p/doc.`);
       if (onSuccess) onSuccess();
       else onClose();
+
       
     } catch (err) {
       console.error('Error procesando lote y/o B.O.M:', err.message);

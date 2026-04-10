@@ -6,9 +6,12 @@ import {
   LogOut,
   Menu,
   X,
-  Archive
+  Archive,
+  History
 } from 'lucide-react';
+import TabKardex from './tabs/TabKardex';
 import TabResumen from './tabs/TabResumen';
+
 import TabInventarioInsumos from './tabs/TabInventarioInsumos';
 import TabAlmacenZapatos from './tabs/TabAlmacenZapatos';
 import TabRecetasProduccion from './tabs/TabRecetasProduccion';
@@ -27,7 +30,9 @@ export default function DashboardLayout({ session, handleLogout }) {
     { id: 'almacen', label: 'Producto Terminado', icon: Archive },
     { id: 'inventario', label: 'Inventario Insumos', icon: Settings },
     { id: 'recetario', label: 'Fichas de Calzado', icon: Settings },
+    { id: 'kardex', label: 'Movimientos (Kárdex)', icon: History },
   ];
+
 
   return (
     <div className="flex h-screen w-full bg-[#111111] overflow-hidden">
@@ -191,6 +196,8 @@ export default function DashboardLayout({ session, handleLogout }) {
         {activeTab === 'inventario' && <TabInventarioInsumos />}
 
         {activeTab === 'recetario' && <TabRecetasProduccion />}
+
+        {activeTab === 'kardex' && <TabKardex />}
 
 
       </main>
