@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Configuración de la IA (Asegúrate de poner estas variables en Vercel)
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Puedes cambiarlo a gemma2-9b o similar si está disponible
 
 // Configuración de Evolution API
