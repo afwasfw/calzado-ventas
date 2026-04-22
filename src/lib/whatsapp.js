@@ -1,69 +1,87 @@
 /**
- * WhatsApp Service Layer (Evolution API Integration)
- * Corrected structure for Evolution API v2
+ * LIBRERÍA DE COMUNICACIÓN - EVOLUTION API (RAILWAY)
+ * Este archivo centraliza todas las peticiones hacia el bot de WhatsApp.
  */
 
-const EVO_CONFIG = {
-  baseUrl: 'https://evolution-api-v2-3-7-nmoa.onrender.com',
-  apiKey: 'Calzado2026'
+const API_URL = "https://evolution-api-production-b0d7.up.railway.app";
+const API_KEY = "Calzado2026";
+const INSTANCE = "emssa";
+
+/**
+ * Envía un mensaje de texto plano a un número específico.
+ * @param {string} number - Número en formato internacional (ej: 51933025385)
+ * @param {string} text - El mensaje a enviar
+ */
+export const sendTextMessage = async (number, text) => {
+    try {
+        const response = await fetch(`${API_URL}/message/sendText/${INSTANCE}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': API_KEY
+            },
+            body: JSON.stringify({
+                number: number,
+                text: text,
+                options: {
+                    delay: 1200,
+                    presence: 'composing'
+                }
+            })
+        });
+
+        if (!response.ok) throw new Error('Error al enviar mensaje');
+        return await response.json();
+    } catch (error) {
+        console.error("WhatsApp Error (Text):", error);
+        return null;
+    }
 };
 
-export const whatsappService = {
-  async sendText(remoteJid, text) {
-    const cleanNumber = remoteJid.replace('+', '').replace(/\s/g, '');
-    
+/**
+ * Envía una imagen con pie de foto opcional.
+ * @param {string} number 
+ * @param {string} mediaUrl - URL pública de la imagen
+ * @param {string} caption 
+ */
+export const sendImageMessage = async (number, mediaUrl, caption = "") => {
     try {
-      // 1. Fetch instances correctly
-      const responseInstances = await fetch(`${EVO_CONFIG.baseUrl}/instance/fetchInstances`, {
-        headers: { 'apikey': EVO_CONFIG.apiKey }
-      });
-      
-      const data = await responseInstances.json();
-      console.log('DEBUG: Full raw data from server:', data);
+        const response = await fetch(`${API_URL}/message/sendMedia/${INSTANCE}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': API_KEY
+            },
+            body: JSON.stringify({
+                number: number,
+                mediaMessage: {
+                    mediatype: 'image',
+                    media: mediaUrl,
+                    caption: caption
+                }
+            })
+        });
 
-      // Evolution API v2 usually returns an array directly or inside a property
-      const instancesList = Array.isArray(data) ? data : (data.instances || []);
-      
-      // Find instance that is connected or just pick the first one from the list
-      const targetInstance = instancesList.find(i => i.connectionStatus === 'open' || i.instance?.connectionStatus === 'open') || instancesList[0];
-
-      if (!targetInstance) {
-        throw new Error('No se encontró ninguna instancia activa en el servidor.');
-      }
-
-      // Extract the name - in v2 it might be inside targetInstance.name or targetInstance.instanceName
-      const name = targetInstance.instanceName || targetInstance.name || (targetInstance.instance && targetInstance.instance.instanceName);
-
-      if (!name) {
-        console.error('Could not find name in:', targetInstance);
-        throw new Error('La instancia existe pero no tiene un nombre válido.');
-      }
-
-      console.log('Sending message via instance:', name);
-
-      // 2. Send the message
-      const sendRes = await fetch(`${EVO_CONFIG.baseUrl}/message/sendText/${name}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': targetInstance.token || EVO_CONFIG.apiKey
-        },
-        body: JSON.stringify({
-          number: cleanNumber,
-          text: text
-        })
-      });
-
-      const sendData = await sendRes.json();
-
-      if (!sendRes.ok) {
-        throw new Error(sendData.message || 'Error al enviar mensaje');
-      }
-
-      return sendData;
+        if (!response.ok) throw new Error('Error al enviar imagen');
+        return await response.json();
     } catch (error) {
-      console.error('WhatsApp Service Error:', error);
-      throw error;
+        console.error("WhatsApp Error (Image):", error);
+        return null;
     }
-  }
+};
+
+/**
+ * Obtiene el estado de la instancia (para verificar si el QR sigue activo).
+ */
+export const getInstanceStatus = async () => {
+    try {
+        const response = await fetch(`${API_URL}/instance/connectionStatus/${INSTANCE}`, {
+            method: 'GET',
+            headers: { 'apikey': API_KEY }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("WhatsApp Error (Status):", error);
+        return null;
+    }
 };
