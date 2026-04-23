@@ -45,9 +45,24 @@ module.exports = async (req, res) => {
 
         const remoteJid = data.key.remoteJid;
         const pushName = data.pushName || "Cliente";
-        const textMessage = data.message.conversation || data.message.extendedTextMessage?.text || "";
+        
+        // Detectamos si es texto o audio
+        let textMessage = data.message.conversation || data.message.extendedTextMessage?.text || "";
+        const isAudio = !!data.message.audioMessage;
+        let audioUrl = "";
 
-        if (!textMessage) return res.status(200).send('No Text');
+        if (isAudio) {
+            console.log(`[Audio] Recibido mensaje de voz de ${pushName}`);
+            // La Evolution API nos manda el archivo, necesitamos descargarlo o enviarlo a transcribir
+            // Por ahora, si es audio, le diremos al usuario que lo estamos procesando
+            await sendTextMessage(remoteJid, "¡He recibido tu audio! Dame un momento para escucharlo... 🎧");
+            
+            // Aquí capturamos la data del audio si viene en el webhook
+            // Nota: Evolution API suele enviar el audio codificado en base64 o una URL
+            audioUrl = data.message.audioMessage.url || ""; 
+        }
+
+        if (!textMessage && !isAudio) return res.status(200).send('No Content');
 
         console.log(`[AI] Procesando mensaje de ${pushName}`);
 
@@ -108,23 +123,23 @@ module.exports = async (req, res) => {
             }
         }
 
-        // --- LÓGICA DE LIMPIEZA REFORZADA ---
+        // --- LÓGICA DE LIMPIEZA FLEXIBLE ---
         let aiText = "";
         const match = aiTextRaw.match(/<res>([\s\S]*?)<\/res>/i);
         
         if (match) {
             aiText = match[1].trim();
         } else {
-            // Si no encontró etiquetas, limpiamos basura común
-            aiText = aiTextRaw.replace(/<res>|<\/res>/g, "").trim();
+            // Si NO hay etiquetas, usamos el texto completo pero limpiamos posibles etiquetas rotas
+            aiText = aiTextRaw.replace(/<res>|<\/res>/gi, "").trim();
         }
 
-        // ELIMINAR COMILLAS INVERTIDAS (Los backticks que salían en la captura)
+        // Limpieza final de basura técnica
         aiText = aiText.replace(/`/g, "").trim();
 
-        // Si después de todo sigue saliendo "and" o algo muy corto, fallback
-        if (!aiText || aiText.toLowerCase() === "and" || aiText.length < 2) {
-            aiText = "¡Hola! Soy el asistente de Calzado Emssa. ¿En qué puedo ayudarte hoy?";
+        // Si realmente no hay nada después de limpiar, ahí recién usamos un mensaje básico
+        if (!aiText || aiText.length < 2) {
+            aiText = "¡Hola! Soy el asistente de Calzado Emssa. ¿En qué puedo ayudarte hoy? 😊";
         }
 
         if (aiText) {
