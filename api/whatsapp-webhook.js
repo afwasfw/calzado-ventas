@@ -1,8 +1,26 @@
 // api/whatsapp-webhook.js
 
-const API_URL_RAILWAY = "https://evolution-api-production-b0d7.up.railway.app";
+const API_URL_RAILWAY = "https://emssa-production.up.railway.app";
 const API_KEY_RAILWAY = "Calzado2026";
 const INSTANCE = "emssa";
+
+// Función para enviar mensajes a WhatsApp vía Evolution API
+async function sendTextMessage(remoteJid, text) {
+    const whatsappNumber = remoteJid.split('@')[0];
+    try {
+        await fetch(`${API_URL_RAILWAY}/message/sendText/${INSTANCE}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'apikey': API_KEY_RAILWAY 
+            },
+            body: JSON.stringify({ number: whatsappNumber, text: text })
+        });
+        console.log(`[WhatsApp] Mensaje enviado a ${whatsappNumber}`);
+    } catch (error) {
+        console.error("[WhatsApp] Error enviando mensaje:", error.message);
+    }
+}
 
 // URL de Google AI Studio v1beta - ¡POR FIN ACTIVANDO GEMMA 4 31B IT!
 const AI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent";
