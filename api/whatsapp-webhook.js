@@ -173,8 +173,8 @@ module.exports = async (req, res) => {
                 
                 if (base64) {
                     const transcriptionPrompt = "ACTÚA COMO UN TRANSCRIPTOR MECÁNICO ESTRICTO. Tu única misión es escribir las palabras que escuchas en el audio. PROHIBIDO saludar. PROHIBIDO responder al cliente. PROHIBIDO usar negritas o formato de WhatsApp. Solo devuelve el texto plano de lo que dice el usuario. Si no hay audio claro, responde 'Audio sin contenido'.";
-                    // Usamos el alias genérico que ya vimos que funciona
-                    const dataTranscription = await callAI("gemini-flash-latest", transcriptionPrompt, base64);
+                    // Cambiamos a Gemini 3 Flash porque tienes cuota limpia (0/20)
+                    const dataTranscription = await callAI("gemini-3-flash", transcriptionPrompt, base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
                     
@@ -186,7 +186,7 @@ module.exports = async (req, res) => {
                         
                         textMessage = transcription;
                     } else {
-                        console.error("[AI Audio] Falló transcripción con nueva clave:", JSON.stringify(dataTranscription));
+                        console.error("[AI Audio] Error de cuota o modelo:", JSON.stringify(dataTranscription));
                     }
                 }
             } catch (e) {
@@ -208,11 +208,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // INTENTO 2 (Failover): GEMINI FLASH LATEST
+        // INTENTO 2 (Failover): GEMINI 3 FLASH
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini Flash Latest...");
-                const dataFlash = await callAI("gemini-flash-latest", textMessage || "Hola");
+                console.log("[AI] Usando Respaldo: Gemini 3 Flash...");
+                const dataFlash = await callAI("gemini-3-flash", textMessage || "Hola");
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
