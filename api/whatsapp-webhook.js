@@ -87,7 +87,7 @@ module.exports = async (req, res) => {
             
             const parts = [];
             if (base64Audio) {
-                parts.push({ inlineData: { mimeType: "audio/ogg", data: base64Audio } });
+                parts.push({ inlineData: { mimeType: "audio/ogg;codecs=opus", data: base64Audio } });
                 parts.push({ text: "He enviado un audio. Por favor, escúchalo y responde al cliente como Emssa Bot." });
             } else {
                 parts.push({ 
@@ -112,14 +112,22 @@ module.exports = async (req, res) => {
         // --- LÓGICA DE PROCESAMIENTO (AUDIO PRIMERO) ---
         if (isAudio && audioUrl) {
             try {
-                console.log("[AI] Procesando AUDIO con Gemini...");
+                console.log(`[Audio] Intentando procesar URL: ${audioUrl}`);
                 const base64 = await downloadMedia(audioUrl);
+                
                 if (base64) {
+                    console.log(`[Audio] Descargado con éxito. Tamaño: ${base64.length} caracteres.`);
                     const dataAudio = await callAI("gemini-1.5-flash-latest", "", base64);
+                    
                     if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
                         aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
+                        console.log(`[AI Audio] Respuesta obtenida: ${aiTextRaw.substring(0, 50)}...`);
                         success = true;
+                    } else {
+                        console.error("[AI Audio] La IA no devolvió texto para el audio:", JSON.stringify(dataAudio));
                     }
+                } else {
+                    console.error("[Audio] Falló la descarga del archivo base64.");
                 }
             } catch (e) {
                 console.error("[AI] Error en flujo de audio:", e.message);
