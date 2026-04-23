@@ -53,13 +53,18 @@ module.exports = async (req, res) => {
 
         if (isAudio) {
             console.log(`[Audio] Recibido mensaje de voz de ${pushName}`);
-            // La Evolution API nos manda el archivo, necesitamos descargarlo o enviarlo a transcribir
-            // Por ahora, si es audio, le diremos al usuario que lo estamos procesando
             await sendTextMessage(remoteJid, "¡He recibido tu audio! Dame un momento para escucharlo... 🎧");
             
-            // Aquí capturamos la data del audio si viene en el webhook
-            // Nota: Evolution API suele enviar el audio codificado en base64 o una URL
-            audioUrl = data.message.audioMessage.url || ""; 
+            // Intentamos capturar el base64 directamente si viene en el webhook
+            // Evolution API puede enviar el base64 en 'data' o 'base64'
+            const audioData = data.message.audioMessage;
+            audioUrl = audioData.url || "";
+            // Si el audio viene como base64 directo, lo usamos
+            const rawBase64 = audioData.base64 || audioData.data || "";
+            if (rawBase64) {
+                console.log("[Audio] Base64 detectado directamente en el mensaje.");
+                audioUrl = "base64://" + rawBase64; // Marcador interno
+            }
         }
 
         if (!textMessage && !isAudio) return res.status(200).send('No Content');
@@ -72,6 +77,9 @@ module.exports = async (req, res) => {
         // --- FUNCIÓN PARA DESCARGAR MEDIOS (AUDIO) ---
         const downloadMedia = async (url) => {
             try {
+                if (url.startsWith("base64://")) {
+                    return url.replace("base64://", "");
+                }
                 const response = await fetch(url, { headers: { 'apikey': API_KEY_RAILWAY } });
                 const arrayBuffer = await response.arrayBuffer();
                 return Buffer.from(arrayBuffer).toString('base64');
@@ -117,7 +125,7 @@ module.exports = async (req, res) => {
                 
                 if (base64) {
                     console.log(`[Audio] Descargado con éxito. Tamaño: ${base64.length} caracteres.`);
-                    const dataAudio = await callAI("gemini-1.5-flash-latest", "", base64);
+                    const dataAudio = await callAI("gemini-1.5-flash", "", base64);
                     
                     if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
                         aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
@@ -149,11 +157,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // INTENTO 2 (Failover): GEMINI 1.5 FLASH LATEST (El "Live" de 1M tokens)
+        // INTENTO 2 (Failover): GEMINI 1.5 FLASH (El "Live")
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash Latest...");
-                const dataFlash = await callAI("gemini-1.5-flash-latest", textMessage || "Hola");
+                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash...");
+                const dataFlash = await callAI("gemini-1.5-flash", textMessage || "Hola");
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
