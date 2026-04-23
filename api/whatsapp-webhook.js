@@ -8,7 +8,7 @@ const INSTANCE = "emssa";
 async function sendTextMessage(remoteJid, text) {
     const whatsappNumber = remoteJid.split('@')[0];
     try {
-        await fetch(`${API_URL_RAILWAY}/message/sendText/${INSTANCE}`, {
+        const response = await fetch(`${API_URL_RAILWAY}/message/sendText/${INSTANCE}`, {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json', 
@@ -16,9 +16,17 @@ async function sendTextMessage(remoteJid, text) {
             },
             body: JSON.stringify({ number: whatsappNumber, text: text })
         });
-        console.log(`[WhatsApp] Mensaje enviado a ${whatsappNumber}`);
+        
+        const data = await response.json();
+        console.log(`[WhatsApp] Respuesta de Railway:`, JSON.stringify(data));
+        
+        if (response.ok) {
+            console.log(`[WhatsApp] Mensaje aceptado por API para: ${whatsappNumber}`);
+        } else {
+            console.error(`[WhatsApp] Error en API Railway:`, data);
+        }
     } catch (error) {
-        console.error("[WhatsApp] Error enviando mensaje:", error.message);
+        console.error("[WhatsApp] Error de red enviando mensaje:", error.message);
     }
 }
 
