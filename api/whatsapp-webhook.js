@@ -126,7 +126,8 @@ module.exports = async (req, res) => {
             const parts = [];
             if (base64Audio) {
                 parts.push({ inlineData: { mimeType: "audio/ogg;codecs=opus", data: base64Audio } });
-                parts.push({ text: "INSTRUCCIÓN CRÍTICA: Escucha este audio adjunto. Transcríbelo mentalmente y responde al cliente como 'Emssa Bot' (Asistente de Calzado Emssa). Si el audio es de un cliente consultando por precios, catálogo o pedidos, dale una respuesta amable y profesional en español. NO digas que eres un asistente de texto; ¡puedes escuchar este audio perfectamente!" });
+                // Aquí estaba el error: estábamos ignorando el userMessage (que ahora es el prompt de transcripción)
+                parts.push({ text: userMessage }); 
             } else {
                 parts.push({ 
                     text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa en Trujillo. 
