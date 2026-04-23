@@ -61,14 +61,20 @@ module.exports = async (req, res) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    system_instruction: {
+                    contents: [{ 
                         parts: [{ 
                             text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa en Trujillo. 
-                                   REGLA CRÍTICA: Tu respuesta debe estar entre <res> y </res>. 
-                                   No uses comillas invertidas (\`) ni razonamientos técnicos.` 
-                        }]
-                    },
-                    contents: [{ parts: [{ text: textMessage }] }]
+                                   Responde amablemente y encierra tu mensaje entre <res> y </res>.
+                                   Cliente dice: "${textMessage}"
+                                   Respuesta:` 
+                        }] 
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        topK: 40,
+                        topP: 0.95,
+                        maxOutputTokens: 8192,
+                    }
                 })
             });
             return await response.json();
