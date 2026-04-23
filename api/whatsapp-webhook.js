@@ -74,6 +74,15 @@ module.exports = async (req, res) => {
         let aiTextRaw = "";
         let success = false;
 
+        // DEBUG: Listar modelos disponibles una vez
+        try {
+            const listModels = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GOOGLE_AI_API_KEY}`);
+            const modelsData = await listModels.json();
+            console.log("[DEBUG] Modelos permitidos para tu Key:", JSON.stringify(modelsData.models?.map(m => m.name)));
+        } catch (e) {
+            console.error("[DEBUG] No se pudo listar modelos:", e.message);
+        }
+
         // --- FUNCIÓN PARA DESCARGAR MEDIOS (AUDIO) ---
         const downloadMedia = async (url) => {
             try {
@@ -125,8 +134,8 @@ module.exports = async (req, res) => {
                 
                 if (base64) {
                     console.log(`[Audio] Descargado con éxito. Tamaño: ${base64.length} caracteres.`);
-                    // Usamos la "Vieja Confiable": gemini-1.5-flash (Estable para Multimodal)
-                    const dataAudio = await callAI("gemini-1.5-flash", "", base64);
+                    // Probando con -latest que es obligatorio en algunos v1beta
+                    const dataAudio = await callAI("gemini-1.5-flash-latest", "", base64);
                     
                     if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
                         aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
