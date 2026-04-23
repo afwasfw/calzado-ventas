@@ -154,8 +154,8 @@ module.exports = async (req, res) => {
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
-                    const transcriptionPrompt = "AUDIO TRANSCRIPTION TASK: Listen and write ONLY the words you hear in Spanish. NO greetings. NO summaries. NO explanations. If empty, write 'Audio sin contenido'.";
-                    // Usamos el alias genérico que suele tener más cuota
+                    const transcriptionPrompt = "ACTÚA COMO UN TRANSCRIPTOR MECÁNICO ESTRICTO. Tu única misión es escribir las palabras que escuchas en el audio. PROHIBIDO saludar. PROHIBIDO responder al cliente. PROHIBIDO usar negritas o formato de WhatsApp. Solo devuelve el texto plano de lo que dice el usuario. Si no hay audio claro, responde 'Audio sin contenido'.";
+                    // Usamos el alias genérico que ya vimos que funciona
                     const dataTranscription = await callAI("gemini-flash-latest", transcriptionPrompt, base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
