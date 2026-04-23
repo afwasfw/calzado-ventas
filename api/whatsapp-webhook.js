@@ -104,17 +104,33 @@ module.exports = async (req, res) => {
             console.error("[DEBUG] No se pudo listar modelos:", e.message);
         }
 
-        // --- FUNCIÓN PARA DESCARGAR MEDIOS (AUDIO) ---
-        const downloadMedia = async (url) => {
+        // --- FUNCIÓN PARA DESCARGAR MEDIOS (AUDIO) VÍA EVOLUTION API ---
+        const downloadMedia = async (webhookData) => {
             try {
-                if (url.startsWith("base64://")) {
-                    return url.replace("base64://", "");
+                // 1. Si el webhook ya trae el base64, lo usamos directamente
+                if (webhookData.message?.base64) return webhookData.message.base64;
+                if (webhookData.base64) return webhookData.base64;
+
+                // 2. Si no lo trae, se lo pedimos a la Evolution API (Desencriptación)
+                console.log("[Audio] Pidiendo desencriptación del audio a Evolution API...");
+                const response = await fetch(`${API_URL_RAILWAY}/chat/getBase64FromMediaMessage/${INSTANCE}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'apikey': API_KEY_RAILWAY 
+                    },
+                    body: JSON.stringify({ message: webhookData })
+                });
+                
+                const result = await response.json();
+                if (result && result.base64) {
+                    return result.base64;
+                } else {
+                    console.error("[Audio] Evolution API no devolvió base64:", result);
+                    return null;
                 }
-                const response = await fetch(url, { headers: { 'apikey': API_KEY_RAILWAY } });
-                const arrayBuffer = await response.arrayBuffer();
-                return Buffer.from(arrayBuffer).toString('base64');
             } catch (e) {
-                console.error("[Audio] Error descargando medio:", e.message);
+                console.error("[Audio] Error obteniendo base64:", e.message);
                 return null;
             }
         };
@@ -149,10 +165,11 @@ module.exports = async (req, res) => {
         };
 
         // --- LÓGICA DE PROCESAMIENTO (AUDIO -> TRANSCRIPCIÓN -> GEMMA) ---
-        if (isAudio && audioUrl) {
+        if (isAudio) {
             try {
-                console.log(`[Audio] Transcribiendo con Gemini Lite (Nueva Key)...`);
-                const base64 = await downloadMedia(audioUrl);
+                console.log(`[Audio] Transcribiendo con Gemini 1.5 Flash (Free Tier)...`);
+                // Pasamos TODO el objeto data para que Evolution API lo desencripte
+                const base64 = await downloadMedia(data);
                 
                 if (base64) {
                     const transcriptionPrompt = "ACTÚA COMO UN TRANSCRIPTOR MECÁNICO ESTRICTO. Tu única misión es escribir las palabras que escuchas en el audio. PROHIBIDO saludar. PROHIBIDO responder al cliente. PROHIBIDO usar negritas o formato de WhatsApp. Solo devuelve el texto plano de lo que dice el usuario. Si no hay audio claro, responde 'Audio sin contenido'.";
