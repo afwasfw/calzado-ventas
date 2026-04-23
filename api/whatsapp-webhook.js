@@ -125,7 +125,7 @@ module.exports = async (req, res) => {
                 
                 if (base64) {
                     // Pedimos SOLAMENTE la transcripción a Gemini
-                    const dataTranscription = await callAI("gemini-2.5-flash", "TRANSCRIPCIÓN LITERAL: Escucha este audio y escribe exactamente lo que dice el usuario. No respondas al usuario, solo transcribe.", base64);
+                    const dataTranscription = await callAI("gemini-2.5-flash", "ACTÚA COMO UN TRANSCRIPTOR LITERAL: Escucha este audio y escribe exactamente las palabras que escuchas, sin añadir saludos, ni resúmenes, ni interpretaciones. Si no escuchas nada claro, responde 'Audio sin contenido'. Solo devuelve el texto transcrito.", base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
                     
