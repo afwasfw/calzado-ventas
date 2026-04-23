@@ -69,8 +69,8 @@ module.exports = async (req, res) => {
         let aiTextRaw = "";
         let success = false;
 
-        // --- FUNCIÓN DE LLAMADA A IA CON REINTENTO (FAILOVER) ---
-        const callAI = async (modelName) => {
+        // --- FUNCIÓN DE LLAMADA A IA (Soporta múltiples modelos) ---
+        const callAI = async (modelName, userMessage) => {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
             const response = await fetch(url, {
                 method: 'POST',
@@ -80,46 +80,39 @@ module.exports = async (req, res) => {
                         parts: [{ 
                             text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa en Trujillo. 
                                    Responde amablemente y encierra tu mensaje entre <res> y </res>.
-                                   Cliente dice: "${textMessage}"
+                                   Cliente dice: "${userMessage}"
                                    Respuesta:` 
                         }] 
                     }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 8192,
-                    }
+                    generationConfig: { temperature: 0.7 }
                 })
             });
             return await response.json();
         };
 
-        // INTENTO 1: GEMINI 1.5 FLASH (El más estable para Webhooks)
+        // INTENTO 1: GEMMA 3 27B (La favorita por inteligencia)
         try {
-            console.log("[AI] Intentando con Gemini 1.5 Flash...");
-            const dataGemini = await callAI("gemini-1.5-flash");
-            if (dataGemini.candidates?.[0]?.content?.parts?.[0]?.text) {
-                aiTextRaw = dataGemini.candidates[0].content.parts[0].text;
+            console.log("[AI] Intentando con Gemma 3 27B...");
+            const dataGemma3 = await callAI("gemma-3-27b-it", textMessage || "Hola");
+            if (dataGemma3.candidates?.[0]?.content?.parts?.[0]?.text) {
+                aiTextRaw = dataGemma3.candidates[0].content.parts[0].text;
                 success = true;
-            } else if (dataGemini.error) {
-                console.error("[AI] Error en Gemini:", dataGemini.error.message);
             }
         } catch (e) {
-            console.error("[AI] Error crítico en llamada a Gemini:", e.message);
+            console.error("[AI] Error en Gemma 3:", e.message);
         }
 
-        // INTENTO 2: GEMMA 3 27B (Si Gemini falló)
+        // INTENTO 2 (Failover): GEMINI 1.5 FLASH LATEST (El "Live" de 1M tokens)
         if (!success) {
             try {
-                console.log("[AI] Gemini falló. Intentando con Gemma 3 27B...");
-                const dataGemma3 = await callAI("gemma-3-27b-it");
-                if (dataGemma3.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    aiTextRaw = dataGemma3.candidates[0].content.parts[0].text;
+                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash Latest...");
+                const dataFlash = await callAI("gemini-1.5-flash-latest", textMessage || "Hola");
+                if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
                 }
             } catch (e) {
-                console.error("[AI] Error crítico en llamada a Gemma 3:", e.message);
+                console.error("[AI] Error en Gemini Flash:", e.message);
             }
         }
 
