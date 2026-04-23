@@ -3,7 +3,9 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Configuración Global
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemma-4-31b" });
+
+
 
 const API_URL = "https://evolution-api-production-b0d7.up.railway.app";
 const API_KEY = "Calzado2026";
