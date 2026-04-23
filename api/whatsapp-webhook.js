@@ -120,21 +120,19 @@ module.exports = async (req, res) => {
         // --- LÓGICA DE PROCESAMIENTO (AUDIO -> TRANSCRIPCIÓN -> GEMMA) ---
         if (isAudio && audioUrl) {
             try {
-                console.log(`[Audio] Transcribiendo con Gemini 2.5 Flash...`);
+                console.log(`[Audio] Transcribiendo con Gemini Lite...`);
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
-                    // Usamos Gemini Lite que es más obediente para tareas técnicas
                     const dataTranscription = await callAI("gemini-2.0-flash-lite", "STRICT VERBATIM TRANSCRIPTION ONLY. Listen to this audio and write EXACTLY what the user said in Spanish. NO summaries, NO greetings, NO explanations. Just the text of the audio.", base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
                     
-                    if (transcription) {
-                        console.log(`[AI Audio] Transcripción lograda: ${transcription.substring(0, 50)}...`);
-                        // Ahora le pasamos la transcripción a Gemma 3
+                    if (transcription && transcription.length > 2) {
+                        console.log(`[AI Audio] Transcripción lograda: ${transcription}`);
                         textMessage = transcription;
-                        // Forzamos success false para que entre a la lógica de Gemma 3 de abajo
-                        success = false; 
+                    } else {
+                        console.error("[AI Audio] No se obtuvo transcripción:", JSON.stringify(dataTranscription));
                     }
                 }
             } catch (e) {
