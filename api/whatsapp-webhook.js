@@ -41,9 +41,30 @@ module.exports = async (req, res) => {
     try {
         const body = req.body;
         const data = body?.data;
-        if (!data || data.key?.fromMe || !data.message) return res.status(200).send('Ignored');
+        
+        // --- FILTRO DE SEGURIDAD: SOLO RESPONDER A NÚMEROS AUTORIZADOS ---
+        const ALLOWED_NUMBERS = ["51941332536", "TU_OTRO_NUMERO_AQUI"]; // Agrega aquí los números que pueden usar el bot
+        const remoteJid = data?.key?.remoteJid || "";
+        const isGroup = remoteJid.endsWith('@g.us');
+        const senderNumber = remoteJid.split('@')[0];
 
-        const remoteJid = data.key.remoteJid;
+        // 1. Ignorar si el mensaje es mío
+        if (data?.key?.fromMe) return res.status(200).send('Ignored: From Me');
+        
+        // 2. Ignorar si es un grupo
+        if (isGroup) {
+            console.log(`[Security] Ignorando mensaje de grupo: ${remoteJid}`);
+            return res.status(200).send('Ignored: Group');
+        }
+
+        // 3. Ignorar si no está en la lista blanca (opcional, pero recomendado por ahora)
+        if (!ALLOWED_NUMBERS.includes(senderNumber)) {
+            console.log(`[Security] Bloqueado mensaje de número no autorizado: ${senderNumber}`);
+            return res.status(200).send('Ignored: Unauthorized Number');
+        }
+
+        if (!data || !data.message) return res.status(200).send('Ignored: No Message');
+
         const pushName = data.pushName || "Cliente";
         
         // Detectamos si es texto o audio
