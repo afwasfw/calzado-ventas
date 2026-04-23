@@ -124,8 +124,8 @@ module.exports = async (req, res) => {
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
-                    // Pedimos SOLAMENTE la transcripción a Gemini
-                    const dataTranscription = await callAI("gemini-2.5-flash", "ACTÚA COMO UN TRANSCRIPTOR LITERAL: Escucha este audio y escribe exactamente las palabras que escuchas, sin añadir saludos, ni resúmenes, ni interpretaciones. Si no escuchas nada claro, responde 'Audio sin contenido'. Solo devuelve el texto transcrito.", base64);
+                    // Usamos Gemini Lite que es más obediente para tareas técnicas
+                    const dataTranscription = await callAI("gemini-2.0-flash-lite", "STRICT VERBATIM TRANSCRIPTION ONLY. Listen to this audio and write EXACTLY what the user said in Spanish. NO summaries, NO greetings, NO explanations. Just the text of the audio.", base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
                     
