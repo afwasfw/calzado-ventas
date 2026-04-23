@@ -141,24 +141,22 @@ module.exports = async (req, res) => {
         // --- LÓGICA DE PROCESAMIENTO (AUDIO -> TRANSCRIPCIÓN -> GEMMA) ---
         if (isAudio && audioUrl) {
             try {
-                console.log(`[Audio] Intentando transcripción técnica con Gemini Lite...`);
+                console.log(`[Audio] Intentando transcripción con Gemini 1.5 Flash...`);
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
-                    // Prompt ultra-estricto para evitar que la IA responda por su cuenta
+                    // Prompt ultra-estricto
                     const transcriptionPrompt = "AUDIO TRANSCRIPTION TASK: Listen and write ONLY the words you hear in Spanish. NO greetings. NO summaries. NO explanations. If empty, write 'Audio sin contenido'.";
-                    const dataTranscription = await callAI("gemini-2.0-flash-lite", transcriptionPrompt, base64);
+                    const dataTranscription = await callAI("gemini-1.5-flash", transcriptionPrompt, base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
                     
                     if (transcription && transcription.length > 2) {
                         console.log(`[AI Audio] Texto detectado: "${transcription}"`);
-                        textMessage = transcription; // Pasamos el texto a Gemma 3
+                        textMessage = transcription;
                     } else {
-                        console.error("[AI Audio] Respuesta vacía o error de cuota:", JSON.stringify(dataTranscription));
-                        // Si falla la transcripción, enviamos un aviso amigable
-                        await sendTextMessage(remoteJid, "Lo siento, hubo un problema al procesar tu audio. ¿Podrías escribirme tu consulta? 🙏");
-                        return res.status(200).send('Transcription Failed');
+                        console.error("[AI Audio] Error de cuota o modelo:", JSON.stringify(dataTranscription));
+                        // No enviamos mensaje de error aquí para que Gemma intente algo si hay texto parcial
                     }
                 }
             } catch (e) {
