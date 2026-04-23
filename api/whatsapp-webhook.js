@@ -155,7 +155,8 @@ module.exports = async (req, res) => {
                 
                 if (base64) {
                     const transcriptionPrompt = "AUDIO TRANSCRIPTION TASK: Listen and write ONLY the words you hear in Spanish. NO greetings. NO summaries. NO explanations. If empty, write 'Audio sin contenido'.";
-                    const dataTranscription = await callAI("gemini-2.0-flash-lite", transcriptionPrompt, base64);
+                    // Usamos el alias genérico que suele tener más cuota
+                    const dataTranscription = await callAI("gemini-flash-latest", transcriptionPrompt, base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
                     
