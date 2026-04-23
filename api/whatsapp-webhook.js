@@ -25,56 +25,47 @@ module.exports = async (req, res) => {
 
         console.log(`[AI] Procesando mensaje de ${pushName}`);
 
-        // Llamada a la IA con instrucciones estrictas para que no muestre el razonamiento interno
+        // Llamada a la IA con instrucciones de etiquetas delimitadoras
         const aiResponseRaw = await fetch(`${AI_URL}?key=${process.env.GOOGLE_AI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{
                     parts: [{
-                        text: `Eres "Emssa Bot", el asistente de Calzado Emssa. 
-                               REGLA CRÍTICA: Responde ÚNICAMENTE con el mensaje final para el cliente. 
-                               No muestres tu razonamiento, no muestres borradores, ni explicaciones de tu proceso.
-                               Sé profesional, amable y experto en calzado.
+                        text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa. 
+                               REGLA DE ORO: Puedes razonar internamente, pero la respuesta FINAL para el cliente DEBE estar encerrada entre las etiquetas <res> y </res>.
                                
                                Cliente dice: "${textMessage}"
-                               Respuesta final para el cliente:`
+                               Respuesta final para el cliente: <res>`
                     }]
                 }]
             })
         });
 
-
         const aiData = await aiResponseRaw.json();
         
         // Extraemos el texto crudo de la respuesta
-        let aiText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        let aiTextRaw = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        console.log("[AI Raw Response]:", aiTextRaw);
 
-        console.log("[AI Raw Response]:", aiText);
+        // --- NUEVA LÓGICA DE LIMPIEZA POR ETIQUETAS ---
+        const match = aiTextRaw.match(/<res>([\s\S]*?)<\/res>/i);
+        let aiText = match ? match[1].trim() : "";
 
-        // --- LÓGICA DE LIMPIEZA PARA GEMMA 4 ---
-        // Si la IA mandó opciones, intentamos quedarnos con la "Option 3" o la que diga "(Good)" o "(Balanced)"
-        const optionMatch = aiText.match(/\* Option 3 \(Balanced\): ([\s\S]*?)(\(Good\)\.|(?=\*)|$)/i) || 
-                            aiText.match(/\* Option \d.*?: ([\s\S]*?)(\((Good|Balanced)\)\.|(?=\*)|$)/i);
-
-        if (optionMatch && optionMatch[1]) {
-            aiText = optionMatch[1].trim();
-        } else {
-            // Si no hay opciones pero hay una lista de "Role", "Constraint", etc., limpiamos el encabezado
-            aiText = aiText.replace(/^\*[\s\S]*?Respuesta final para el cliente:/i, "").trim();
-            // Eliminamos asteriscos iniciales de la respuesta final si existen
-            aiText = aiText.replace(/^\* /gm, "").trim();
+        // Si la IA no cerró la etiqueta o algo falló, intentamos una limpieza manual
+        if (!aiText && aiTextRaw.includes("<res>")) {
+            aiText = aiTextRaw.split("<res>").pop().split("</res>")[0].trim();
         }
         
-        // Si después de limpiar quedó vacío o algo falló, usamos el texto original pero quitando los asteriscos de las listas
-        if (!aiText) {
-            aiText = "¡Hola! ¿En qué puedo ayudarte hoy con tu calzado?";
+        // Mensaje de respaldo si todo falla
+        if (!aiText || aiText.length < 2) {
+            aiText = "¡Hola! Soy el asistente de Calzado Emssa. ¿En qué puedo ayudarte hoy?";
         }
 
-        // Si hay error de Google, lo imprimimos en logs para debuguear
+        // Si hay error de Google en la data
         if (aiData.error) {
             console.error("GOOGLE AI ERROR:", aiData.error.message);
-            throw new Error(aiData.error.message);
+            return res.status(200).send("AI Error");
         }
 
         // Enviar a WhatsApp
