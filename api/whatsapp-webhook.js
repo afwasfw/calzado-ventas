@@ -1,52 +1,68 @@
 // api/whatsapp-webhook.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Configuración de la IA (Asegúrate de poner estas variables en Vercel)
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Puedes cambiarlo a gemma2-9b o similar si está disponible
-
-// Configuración de Evolution API
 const API_URL = "https://evolution-api-production-b0d7.up.railway.app";
 const API_KEY = "Calzado2026";
 const INSTANCE = "emssa";
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+    // 1. Solo POST
+    if (req.method !== 'POST') {
+        return res.status(200).send('Webhook is active (GET not allowed, use POST)');
+    }
 
     try {
-        const data = req.body;
-        const message = data.data?.message;
-        const remoteJid = data.data?.key?.remoteJid;
-        const fromMe = data.data?.key?.fromMe;
-        const pushName = data.data?.pushName || "Cliente";
+        const body = req.body;
+        
+        // 2. Verificación de estructura básica de Evolution v2
+        if (!body || !body.data) {
+            return res.status(200).json({ status: 'ignored', reason: 'empty_payload' });
+        }
 
-        if (fromMe || !remoteJid) return res.status(200).send('Ignored');
+        const data = body.data;
+        const key = data.key;
+        const message = data.message;
 
-        const textMessage = message?.conversation || message?.extendedTextMessage?.text || "";
-        if (!textMessage) return res.status(200).send('No text found');
+        // 3. Ignorar si es de nosotros mismos o no tiene mensaje
+        if (key?.fromMe || !message) {
+            return res.status(200).json({ status: 'ignored', reason: 'from_me_or_no_message' });
+        }
 
-        console.log(`Mensaje de ${pushName}: ${textMessage}`);
+        const remoteJid = key.remoteJid;
+        const pushName = body.data?.pushName || "Cliente";
 
-        // --- LÓGICA DE IA ---
+        // 4. Extraer texto de forma segura
+        const textMessage = message.conversation || 
+                            message.extendedTextMessage?.text || 
+                            message.imageMessage?.caption || 
+                            "";
+
+        if (!textMessage) {
+            return res.status(200).json({ status: 'ignored', reason: 'no_text_content' });
+        }
+
+        console.log(`[BOT] Mensaje de ${pushName}: ${textMessage}`);
+
+        // 5. Lógica de IA
         const prompt = `
-            Eres el asistente inteligente de "Calzado Emssa", una fábrica de calzado profesional. 
-            Tu objetivo es ayudar a los clientes con sus pedidos y consultas.
+            Eres "Emssa Bot", el asistente de "Calzado Emssa".
+            Responde de forma amable y profesional. 
+            Reglas: Hablamos por docenas y series. 
+            Si preguntan stock, di que estás revisando.
             
-            REGLAS:
-            1. Sé amable, profesional y eficiente.
-            2. Hablamos en términos de "docenas" (12 pares) y "series".
-            3. Si el cliente pregunta por precios o stock, dile que estás consultando el sistema (por ahora no tenemos la conexión a la base de datos lista en este script, pero la tendremos pronto).
-            4. Tu nombre es "Emssa Bot".
-            
-            CLIENTE DICE: "${textMessage}"
-            RESPUESTA DEL BOT:
+            Cliente: ${textMessage}
+            Respuesta:
         `;
 
         const result = await model.generateContent(prompt);
         const aiResponse = result.response.text();
 
-        // --- ENVIAR RESPUESTA A WHATSAPP ---
+        // 6. Enviar respuesta vía Evolution API
+        const whatsappNumber = remoteJid.split('@')[0];
+        
         await fetch(`${API_URL}/message/sendText/${INSTANCE}`, {
             method: 'POST',
             headers: {
@@ -54,16 +70,17 @@ export default async function handler(req, res) {
                 'apikey': API_KEY
             },
             body: JSON.stringify({
-                number: remoteJid.replace('@s.whatsapp.net', ''),
+                number: whatsappNumber,
                 text: aiResponse
             })
         });
 
-        return res.status(200).json({ status: 'success', ai_said: aiResponse });
+        console.log(`[BOT] Respuesta enviada a ${whatsappNumber}`);
+        return res.status(200).json({ status: 'success' });
 
     } catch (error) {
-        console.error("WEBHOOK ERROR:", error);
-        return res.status(500).json({ error: error.message });
+        console.error("CRITICAL ERROR:", error.message);
+        // Respondemos con 200 aunque falle para que Evolution no reintente infinitamente
+        return res.status(200).json({ error: error.message });
     }
 }
-
