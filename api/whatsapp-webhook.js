@@ -94,17 +94,17 @@ module.exports = async (req, res) => {
             console.error("[AI] Error crítico en llamada a Gemma:", e.message);
         }
 
-        // INTENTO 2: GEMINI 2.5 FLASH (Si Gemma falló)
+        // INTENTO 2: GEMMA 3 27B (Si Gemma 4 falló)
         if (!success) {
             try {
-                console.log("[AI] Gemma falló. Intentando con Gemini 2.5 Flash...");
-                const dataGemini = await callAI("gemini-2.5-flash");
-                if (dataGemini.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    aiTextRaw = dataGemini.candidates[0].content.parts[0].text;
+                console.log("[AI] Gemma 4 falló. Intentando con Gemma 3 27B...");
+                const dataGemma3 = await callAI("gemma-3-27b-it");
+                if (dataGemma3.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    aiTextRaw = dataGemma3.candidates[0].content.parts[0].text;
                     success = true;
                 }
             } catch (e) {
-                console.error("[AI] Error crítico en llamada a Gemini:", e.message);
+                console.error("[AI] Error crítico en llamada a Gemma 3:", e.message);
             }
         }
 
