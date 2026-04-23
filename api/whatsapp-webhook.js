@@ -95,6 +95,15 @@ module.exports = async (req, res) => {
         let aiTextRaw = "";
         let success = false;
 
+        // DEBUG: Listar modelos para la NUEVA KEY
+        try {
+            const listModels = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GOOGLE_AI_API_KEY}`);
+            const modelsData = await listModels.json();
+            console.log("[DEBUG-NEW-KEY] Modelos disponibles:", JSON.stringify(modelsData.models?.map(m => m.name)));
+        } catch (e) {
+            console.error("[DEBUG] No se pudo listar modelos:", e.message);
+        }
+
         // --- FUNCIÓN PARA DESCARGAR MEDIOS (AUDIO) ---
         const downloadMedia = async (url) => {
             try {
