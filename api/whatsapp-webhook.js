@@ -47,13 +47,35 @@ module.exports = async (req, res) => {
 
         const aiData = await aiResponseRaw.json();
         
+        // Extraemos el texto crudo de la respuesta
+        let aiText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+        console.log("[AI Raw Response]:", aiText);
+
+        // --- LÓGICA DE LIMPIEZA PARA GEMMA 4 ---
+        // Si la IA mandó opciones, intentamos quedarnos con la "Option 3" o la que diga "(Good)" o "(Balanced)"
+        const optionMatch = aiText.match(/\* Option 3 \(Balanced\): ([\s\S]*?)(\(Good\)\.|(?=\*)|$)/i) || 
+                            aiText.match(/\* Option \d.*?: ([\s\S]*?)(\((Good|Balanced)\)\.|(?=\*)|$)/i);
+
+        if (optionMatch && optionMatch[1]) {
+            aiText = optionMatch[1].trim();
+        } else {
+            // Si no hay opciones pero hay una lista de "Role", "Constraint", etc., limpiamos el encabezado
+            aiText = aiText.replace(/^\*[\s\S]*?Respuesta final para el cliente:/i, "").trim();
+            // Eliminamos asteriscos iniciales de la respuesta final si existen
+            aiText = aiText.replace(/^\* /gm, "").trim();
+        }
+        
+        // Si después de limpiar quedó vacío o algo falló, usamos el texto original pero quitando los asteriscos de las listas
+        if (!aiText) {
+            aiText = "¡Hola! ¿En qué puedo ayudarte hoy con tu calzado?";
+        }
+
         // Si hay error de Google, lo imprimimos en logs para debuguear
         if (aiData.error) {
             console.error("GOOGLE AI ERROR:", aiData.error.message);
             throw new Error(aiData.error.message);
         }
-
-        const aiText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "Hola, ¿en qué puedo ayudarte?";
 
         // Enviar a WhatsApp
         const whatsappNumber = remoteJid.split('@')[0];
