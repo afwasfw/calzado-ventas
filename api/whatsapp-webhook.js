@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
 
         console.log(`[AI] Procesando mensaje de ${pushName}`);
 
-        // Llamada a la IA con instrucciones de etiquetas delimitadoras
+        // Llamada a la IA con instrucciones de etiquetas delimitadoras y EJEMPLO
         const aiResponseRaw = await fetch(`${AI_URL}?key=${process.env.GOOGLE_AI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -33,10 +33,14 @@ module.exports = async (req, res) => {
                 contents: [{
                     parts: [{
                         text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa. 
-                               REGLA DE ORO: Puedes razonar internamente, pero la respuesta FINAL para el cliente DEBE estar encerrada entre las etiquetas <res> y </res>.
+                               INSTRUCCIÓN: Puedes razonar internamente sobre la mejor respuesta, pero el mensaje que enviaremos al cliente DEBE estar encerrado entre <res> y </res>.
                                
+                               EJEMPLO:
+                               Razonamiento: El cliente quiere saber el precio. Buscaré en la lista.
+                               <res>Hola! El precio de las botas es de $50.</res>
+
                                Cliente dice: "${textMessage}"
-                               Respuesta final para el cliente: <res>`
+                               Respuesta:`
                     }]
                 }]
             })
