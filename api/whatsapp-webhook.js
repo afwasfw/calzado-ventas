@@ -141,23 +141,28 @@ module.exports = async (req, res) => {
         // --- LÓGICA DE PROCESAMIENTO (AUDIO -> TRANSCRIPCIÓN -> GEMMA) ---
         if (isAudio && audioUrl) {
             try {
-                console.log(`[Audio] Transcribiendo con Gemini Lite...`);
+                console.log(`[Audio] Intentando transcripción técnica con Gemini Lite...`);
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
-                    const dataTranscription = await callAI("gemini-2.0-flash-lite", "STRICT VERBATIM TRANSCRIPTION ONLY. Listen to this audio and write EXACTLY what the user said in Spanish. NO summaries, NO greetings, NO explanations. Just the text of the audio.", base64);
+                    // Prompt ultra-estricto para evitar que la IA responda por su cuenta
+                    const transcriptionPrompt = "AUDIO TRANSCRIPTION TASK: Listen and write ONLY the words you hear in Spanish. NO greetings. NO summaries. NO explanations. If empty, write 'Audio sin contenido'.";
+                    const dataTranscription = await callAI("gemini-2.0-flash-lite", transcriptionPrompt, base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
                     
                     if (transcription && transcription.length > 2) {
-                        console.log(`[AI Audio] Transcripción lograda: ${transcription}`);
-                        textMessage = transcription;
+                        console.log(`[AI Audio] Texto detectado: "${transcription}"`);
+                        textMessage = transcription; // Pasamos el texto a Gemma 3
                     } else {
-                        console.error("[AI Audio] No se obtuvo transcripción:", JSON.stringify(dataTranscription));
+                        console.error("[AI Audio] Respuesta vacía o error de cuota:", JSON.stringify(dataTranscription));
+                        // Si falla la transcripción, enviamos un aviso amigable
+                        await sendTextMessage(remoteJid, "Lo siento, hubo un problema al procesar tu audio. ¿Podrías escribirme tu consulta? 🙏");
+                        return res.status(200).send('Transcription Failed');
                     }
                 }
             } catch (e) {
-                console.error("[AI] Error en transcripción de audio:", e.message);
+                console.error("[AI] Error crítico en transcripción:", e.message);
             }
         }
 
