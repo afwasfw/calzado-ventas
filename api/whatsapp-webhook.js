@@ -25,18 +25,25 @@ module.exports = async (req, res) => {
 
         console.log(`[AI] Procesando mensaje de ${pushName}`);
 
-        // Llamada a la IA con formato simplificado
+        // Llamada a la IA con instrucciones estrictas para que no muestre el razonamiento interno
         const aiResponseRaw = await fetch(`${AI_URL}?key=${process.env.GOOGLE_AI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{
                     parts: [{
-                        text: `Contexto: Eres el asistente de Calzado Emssa. Responde breve. Cliente: ${textMessage}`
+                        text: `Eres "Emssa Bot", el asistente de Calzado Emssa. 
+                               REGLA CRÍTICA: Responde ÚNICAMENTE con el mensaje final para el cliente. 
+                               No muestres tu razonamiento, no muestres borradores, ni explicaciones de tu proceso.
+                               Sé profesional, amable y experto en calzado.
+                               
+                               Cliente dice: "${textMessage}"
+                               Respuesta final para el cliente:`
                     }]
                 }]
             })
         });
+
 
         const aiData = await aiResponseRaw.json();
         
