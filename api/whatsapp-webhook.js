@@ -25,60 +25,79 @@ module.exports = async (req, res) => {
 
         console.log(`[AI] Procesando mensaje de ${pushName}`);
 
-        // Llamada a la IA con instrucciones de etiquetas delimitadoras y EJEMPLO
-        const aiResponseRaw = await fetch(`${AI_URL}?key=${process.env.GOOGLE_AI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa. 
-                               INSTRUCCIÓN: Puedes razonar internamente sobre la mejor respuesta, pero el mensaje que enviaremos al cliente DEBE estar encerrado entre <res> y </res>.
-                               
-                               EJEMPLO:
-                               Razonamiento: El cliente quiere saber el precio. Buscaré en la lista.
-                               <res>Hola! El precio de las botas es de $50.</res>
+        let aiTextRaw = "";
+        let success = false;
 
-                               Cliente dice: "${textMessage}"
-                               Respuesta:`
-                    }]
-                }]
-            })
-        });
+        // --- FUNCIÓN DE LLAMADA A IA CON REINTENTO (FAILOVER) ---
+        const callAI = async (modelName) => {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    system_instruction: {
+                        parts: [{ 
+                            text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa en Trujillo. 
+                                   REGLA CRÍTICA: Tu respuesta debe estar entre <res> y </res>. 
+                                   No uses comillas invertidas (\`) ni razonamientos técnicos.` 
+                        }]
+                    },
+                    contents: [{ parts: [{ text: textMessage }] }]
+                })
+            });
+            return await response.json();
+        };
 
-        const aiData = await aiResponseRaw.json();
-        
-        // Extraemos el texto crudo de la respuesta
-        let aiTextRaw = aiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        console.log("[AI Raw Response]:", aiTextRaw);
-
-        // --- NUEVA LÓGICA DE LIMPIEZA POR ETIQUETAS ---
-        const match = aiTextRaw.match(/<res>([\s\S]*?)<\/res>/i);
-        let aiText = match ? match[1].trim() : "";
-
-        // Si la IA no cerró la etiqueta o algo falló, intentamos una limpieza manual
-        if (!aiText && aiTextRaw.includes("<res>")) {
-            aiText = aiTextRaw.split("<res>").pop().split("</res>")[0].trim();
+        // INTENTO 1: GEMMA 4
+        try {
+            console.log("[AI] Intentando con Gemma 4...");
+            const dataGemma = await callAI("gemma-4-31b-it");
+            if (dataGemma.candidates?.[0]?.content?.parts?.[0]?.text) {
+                aiTextRaw = dataGemma.candidates[0].content.parts[0].text;
+                success = true;
+            } else if (dataGemma.error) {
+                console.error("[AI] Error en Gemma 4:", dataGemma.error.message);
+            }
+        } catch (e) {
+            console.error("[AI] Error crítico en llamada a Gemma:", e.message);
         }
+
+        // INTENTO 2: GEMINI 2.5 FLASH (Si Gemma falló)
+        if (!success) {
+            try {
+                console.log("[AI] Gemma falló. Intentando con Gemini 2.5 Flash...");
+                const dataGemini = await callAI("gemini-2.5-flash");
+                if (dataGemini.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    aiTextRaw = dataGemini.candidates[0].content.parts[0].text;
+                    success = true;
+                }
+            } catch (e) {
+                console.error("[AI] Error crítico en llamada a Gemini:", e.message);
+            }
+        }
+
+        // --- LÓGICA DE LIMPIEZA REFORZADA ---
+        let aiText = "";
+        const match = aiTextRaw.match(/<res>([\s\S]*?)<\/res>/i);
         
-        // Mensaje de respaldo si todo falla
-        if (!aiText || aiText.length < 2) {
+        if (match) {
+            aiText = match[1].trim();
+        } else {
+            // Si no encontró etiquetas, limpiamos basura común
+            aiText = aiTextRaw.replace(/<res>|<\/res>/g, "").trim();
+        }
+
+        // ELIMINAR COMILLAS INVERTIDAS (Los backticks que salían en la captura)
+        aiText = aiText.replace(/`/g, "").trim();
+
+        // Si después de todo sigue saliendo "and" o algo muy corto, fallback
+        if (!aiText || aiText.toLowerCase() === "and" || aiText.length < 2) {
             aiText = "¡Hola! Soy el asistente de Calzado Emssa. ¿En qué puedo ayudarte hoy?";
         }
 
-        // Si hay error de Google en la data
-        if (aiData.error) {
-            console.error("GOOGLE AI ERROR:", aiData.error.message);
-            return res.status(200).send("AI Error");
+        if (aiText) {
+            await sendTextMessage(remoteJid, aiText);
         }
-
-        // Enviar a WhatsApp
-        const whatsappNumber = remoteJid.split('@')[0];
-        await fetch(`${API_URL_RAILWAY}/message/sendText/${INSTANCE}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': API_KEY_RAILWAY },
-            body: JSON.stringify({ number: whatsappNumber, text: aiText })
-        });
 
         return res.status(200).json({ status: 'success' });
 
