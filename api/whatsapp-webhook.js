@@ -150,12 +150,12 @@ module.exports = async (req, res) => {
         // --- LÓGICA DE PROCESAMIENTO (AUDIO -> TRANSCRIPCIÓN -> GEMMA) ---
         if (isAudio && audioUrl) {
             try {
-                console.log(`[Audio] Transcribiendo con Gemini 1.5 Flash (Free Tier)...`);
+                console.log(`[Audio] Transcribiendo con Gemini Lite (Nueva Key)...`);
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
                     const transcriptionPrompt = "AUDIO TRANSCRIPTION TASK: Listen and write ONLY the words you hear in Spanish. NO greetings. NO summaries. NO explanations. If empty, write 'Audio sin contenido'.";
-                    const dataTranscription = await callAI("gemini-1.5-flash", transcriptionPrompt, base64);
+                    const dataTranscription = await callAI("gemini-2.0-flash-lite", transcriptionPrompt, base64);
                     
                     const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
                     
@@ -167,8 +167,7 @@ module.exports = async (req, res) => {
                         
                         textMessage = transcription;
                     } else {
-                        console.error("[AI Audio] Falló transcripción en Free Tier:", JSON.stringify(dataTranscription));
-                        await sendTextMessage(remoteJid, "⚠️ No pude transcribir el audio, revisa la cuota de tu nueva API Key.");
+                        console.error("[AI Audio] Falló transcripción con nueva clave:", JSON.stringify(dataTranscription));
                     }
                 }
             } catch (e) {
@@ -190,11 +189,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // INTENTO 2 (Failover): GEMINI 1.5 FLASH (Respaldo en Free Tier)
+        // INTENTO 2 (Failover): GEMINI FLASH LATEST
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash...");
-                const dataFlash = await callAI("gemini-1.5-flash", textMessage || "Hola");
+                console.log("[AI] Usando Respaldo: Gemini Flash Latest...");
+                const dataFlash = await callAI("gemini-flash-latest", textMessage || "Hola");
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
