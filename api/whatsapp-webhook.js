@@ -4,8 +4,9 @@ const API_URL_RAILWAY = "https://evolution-api-production-b0d7.up.railway.app";
 const API_KEY_RAILWAY = "Calzado2026";
 const INSTANCE = "emssa";
 
-// URL de Google AI Studio v1beta - Usando Gemini 2.5 Flash (El que aparece activo en tu dashboard)
-const AI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+// URL de Google AI Studio v1beta - ¡POR FIN ACTIVANDO GEMMA 4 31B IT!
+const AI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent";
+
 
 
 module.exports = async (req, res) => {
