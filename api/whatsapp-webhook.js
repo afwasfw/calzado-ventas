@@ -69,37 +69,76 @@ module.exports = async (req, res) => {
         let aiTextRaw = "";
         let success = false;
 
-        // --- FUNCIÓN DE LLAMADA A IA (Soporta múltiples modelos) ---
-        const callAI = async (modelName, userMessage) => {
+        // --- FUNCIÓN PARA DESCARGAR MEDIOS (AUDIO) ---
+        const downloadMedia = async (url) => {
+            try {
+                const response = await fetch(url, { headers: { 'apikey': API_KEY_RAILWAY } });
+                const arrayBuffer = await response.arrayBuffer();
+                return Buffer.from(arrayBuffer).toString('base64');
+            } catch (e) {
+                console.error("[Audio] Error descargando medio:", e.message);
+                return null;
+            }
+        };
+
+        // --- FUNCIÓN DE LLAMADA A IA (Soporta Texto y Audio) ---
+        const callAI = async (modelName, userMessage, base64Audio = null) => {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
+            
+            const parts = [];
+            if (base64Audio) {
+                parts.push({ inlineData: { mimeType: "audio/ogg", data: base64Audio } });
+                parts.push({ text: "He enviado un audio. Por favor, escúchalo y responde al cliente como Emssa Bot." });
+            } else {
+                parts.push({ 
+                    text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa en Trujillo. 
+                           Responde amablemente y encierra tu mensaje entre <res> y </res>.
+                           Cliente dice: "${userMessage}"
+                           Respuesta:` 
+                });
+            }
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ 
-                        parts: [{ 
-                            text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa en Trujillo. 
-                                   Responde amablemente y encierra tu mensaje entre <res> y </res>.
-                                   Cliente dice: "${userMessage}"
-                                   Respuesta:` 
-                        }] 
-                    }],
+                    contents: [{ parts: parts }],
                     generationConfig: { temperature: 0.7 }
                 })
             });
             return await response.json();
         };
 
-        // INTENTO 1: GEMMA 3 27B (La favorita por inteligencia)
-        try {
-            console.log("[AI] Intentando con Gemma 3 27B...");
-            const dataGemma3 = await callAI("gemma-3-27b-it", textMessage || "Hola");
-            if (dataGemma3.candidates?.[0]?.content?.parts?.[0]?.text) {
-                aiTextRaw = dataGemma3.candidates[0].content.parts[0].text;
-                success = true;
+        // --- LÓGICA DE PROCESAMIENTO (AUDIO PRIMERO) ---
+        if (isAudio && audioUrl) {
+            try {
+                console.log("[AI] Procesando AUDIO con Gemini...");
+                const base64 = await downloadMedia(audioUrl);
+                if (base64) {
+                    const dataAudio = await callAI("gemini-1.5-flash-latest", "", base64);
+                    if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
+                        success = true;
+                    }
+                }
+            } catch (e) {
+                console.error("[AI] Error en flujo de audio:", e.message);
             }
-        } catch (e) {
-            console.error("[AI] Error en Gemma 3:", e.message);
+        }
+
+        // --- SI ES TEXTO O SI EL AUDIO FALLÓ ---
+        if (!success) {
+            // INTENTO 1: GEMMA 3 27B
+            try {
+                console.log("[AI] Intentando con Gemma 3 27B...");
+                const dataGemma3 = await callAI("gemma-3-27b-it", textMessage || "Hola");
+                if (dataGemma3.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    aiTextRaw = dataGemma3.candidates[0].content.parts[0].text;
+                    success = true;
+                }
+            } catch (e) {
+                console.error("[AI] Error en Gemma 3:", e.message);
+            }
         }
 
         // INTENTO 2 (Failover): GEMINI 1.5 FLASH LATEST (El "Live" de 1M tokens)
