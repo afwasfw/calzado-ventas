@@ -1,6 +1,6 @@
 // api/whatsapp-webhook.js
 
-const API_URL_RAILWAY = "https://emssa-production.up.railway.app";
+const API_URL_RAILWAY = "https://evolution-api-production-b0d7.up.railway.app";
 const API_KEY_RAILWAY = "Calzado2026";
 const INSTANCE = "emssa";
 
