@@ -125,18 +125,16 @@ module.exports = async (req, res) => {
                 
                 if (base64) {
                     console.log(`[Audio] Descargado con éxito. Tamaño: ${base64.length} caracteres.`);
-                    // Usamos el modelo 8b que es el más estable para audio en v1beta
-                    const dataAudio = await callAI("gemini-1.5-flash-8b-latest", "", base64);
+                    // GEMINI 3 FLASH: El estándar de 2026 para audio nativo
+                    const dataAudio = await callAI("gemini-3-flash", "", base64);
                     
                     if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
                         aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
                         console.log(`[AI Audio] Respuesta obtenida: ${aiTextRaw.substring(0, 50)}...`);
                         success = true;
                     } else {
-                        console.error("[AI Audio] La IA no devolvió texto para el audio:", JSON.stringify(dataAudio));
+                        console.error("[AI Audio] Error o IA no devolvió texto:", JSON.stringify(dataAudio));
                     }
-                } else {
-                    console.error("[Audio] Falló la descarga del archivo base64.");
                 }
             } catch (e) {
                 console.error("[AI] Error en flujo de audio:", e.message);
@@ -158,11 +156,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // INTENTO 2 (Failover): GEMINI 1.5 FLASH (8B es ultra rápido)
+        // INTENTO 2 (Failover): GEMINI 3 FLASH (Respaldo ultra rápido)
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash 8B...");
-                const dataFlash = await callAI("gemini-1.5-flash-8b-latest", textMessage || "Hola");
+                console.log("[AI] Usando Respaldo: Gemini 3 Flash...");
+                const dataFlash = await callAI("gemini-3-flash", textMessage || "Hola");
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
