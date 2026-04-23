@@ -125,7 +125,8 @@ module.exports = async (req, res) => {
                 
                 if (base64) {
                     console.log(`[Audio] Descargado con éxito. Tamaño: ${base64.length} caracteres.`);
-                    const dataAudio = await callAI("gemini-1.5-flash", "", base64);
+                    // Usamos el modelo 8b que es el más estable para audio en v1beta
+                    const dataAudio = await callAI("gemini-1.5-flash-8b-latest", "", base64);
                     
                     if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
                         aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
@@ -157,11 +158,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // INTENTO 2 (Failover): GEMINI 1.5 FLASH (El "Live")
+        // INTENTO 2 (Failover): GEMINI 1.5 FLASH (8B es ultra rápido)
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash...");
-                const dataFlash = await callAI("gemini-1.5-flash", textMessage || "Hola");
+                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash 8B...");
+                const dataFlash = await callAI("gemini-1.5-flash-8b-latest", textMessage || "Hola");
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
