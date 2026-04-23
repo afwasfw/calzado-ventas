@@ -96,7 +96,7 @@ module.exports = async (req, res) => {
             const parts = [];
             if (base64Audio) {
                 parts.push({ inlineData: { mimeType: "audio/ogg;codecs=opus", data: base64Audio } });
-                parts.push({ text: "He enviado un audio. Por favor, escúchalo y responde al cliente como Emssa Bot. Sé amable y profesional." });
+                parts.push({ text: "INSTRUCCIÓN CRÍTICA: Escucha este audio adjunto. Transcríbelo mentalmente y responde al cliente como 'Emssa Bot' (Asistente de Calzado Emssa). Si el audio es de un cliente consultando por precios, catálogo o pedidos, dale una respuesta amable y profesional en español. NO digas que eres un asistente de texto; ¡puedes escuchar este audio perfectamente!" });
             } else {
                 parts.push({ 
                     text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa en Trujillo. 
@@ -117,34 +117,35 @@ module.exports = async (req, res) => {
             return await response.json();
         };
 
-        // --- LÓGICA DE PROCESAMIENTO (AUDIO PRIMERO) ---
+        // --- LÓGICA DE PROCESAMIENTO (AUDIO -> TRANSCRIPCIÓN -> GEMMA) ---
         if (isAudio && audioUrl) {
             try {
-                console.log(`[Audio] Intentando procesar con Gemini 2.5 Flash...`);
+                console.log(`[Audio] Transcribiendo con Gemini 2.5 Flash...`);
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
-                    // Usamos el modelo 2.5 Flash que está en tu lista y es el mejor para audio
-                    const dataAudio = await callAI("gemini-2.5-flash", "", base64);
+                    // Pedimos SOLAMENTE la transcripción a Gemini
+                    const dataTranscription = await callAI("gemini-2.5-flash", "TRANSCRIPCIÓN LITERAL: Escucha este audio y escribe exactamente lo que dice el usuario. No respondas al usuario, solo transcribe.", base64);
                     
-                    if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
-                        aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
-                        console.log(`[AI Audio] Respuesta obtenida con éxito.`);
-                        success = true;
-                    } else {
-                        console.error("[AI Audio] Error o formato no soportado:", JSON.stringify(dataAudio));
+                    const transcription = dataTranscription.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (transcription) {
+                        console.log(`[AI Audio] Transcripción lograda: ${transcription.substring(0, 50)}...`);
+                        // Ahora le pasamos la transcripción a Gemma 3
+                        textMessage = transcription;
+                        // Forzamos success false para que entre a la lógica de Gemma 3 de abajo
+                        success = false; 
                     }
                 }
             } catch (e) {
-                console.error("[AI] Error en flujo de audio:", e.message);
+                console.error("[AI] Error en transcripción de audio:", e.message);
             }
         }
 
-        // --- SI ES TEXTO O SI EL AUDIO FALLÓ ---
+        // --- CEREBRO: GEMMA 3 27B (Para Texto y Transcripciones) ---
         if (!success) {
-            // INTENTO 1: GEMMA 3 27B
             try {
-                console.log("[AI] Intentando con Gemma 3 27B...");
+                console.log("[AI] Generando respuesta con Gemma 3 27B...");
                 const dataGemma3 = await callAI("gemma-3-27b-it", textMessage || "Hola");
                 if (dataGemma3.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataGemma3.candidates[0].content.parts[0].text;
