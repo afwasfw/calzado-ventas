@@ -141,11 +141,10 @@ module.exports = async (req, res) => {
         // --- LÓGICA DE PROCESAMIENTO (AUDIO -> TRANSCRIPCIÓN -> GEMMA) ---
         if (isAudio && audioUrl) {
             try {
-                console.log(`[Audio] Intentando transcripción con Gemini 1.5 Flash...`);
+                console.log(`[Audio] Transcribiendo con Gemini 1.5 Flash (Free Tier)...`);
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
-                    // Prompt ultra-estricto
                     const transcriptionPrompt = "AUDIO TRANSCRIPTION TASK: Listen and write ONLY the words you hear in Spanish. NO greetings. NO summaries. NO explanations. If empty, write 'Audio sin contenido'.";
                     const dataTranscription = await callAI("gemini-1.5-flash", transcriptionPrompt, base64);
                     
@@ -153,14 +152,18 @@ module.exports = async (req, res) => {
                     
                     if (transcription && transcription.length > 2) {
                         console.log(`[AI Audio] Texto detectado: "${transcription}"`);
+                        
+                        // --- ENVIAR TRANSCRIPCIÓN PARA PRUEBA ---
+                        await sendTextMessage(remoteJid, `📝 *He escuchado esto:* "${transcription}"`);
+                        
                         textMessage = transcription;
                     } else {
-                        console.error("[AI Audio] Error de cuota o modelo:", JSON.stringify(dataTranscription));
-                        // No enviamos mensaje de error aquí para que Gemma intente algo si hay texto parcial
+                        console.error("[AI Audio] Falló transcripción en Free Tier:", JSON.stringify(dataTranscription));
+                        await sendTextMessage(remoteJid, "⚠️ No pude transcribir el audio, revisa la cuota de tu nueva API Key.");
                     }
                 }
             } catch (e) {
-                console.error("[AI] Error crítico en transcripción:", e.message);
+                console.error("[AI] Error crítico en flujo de audio:", e.message);
             }
         }
 
@@ -178,11 +181,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // INTENTO 2 (Failover): GEMINI FLASH LATEST
+        // INTENTO 2 (Failover): GEMINI 1.5 FLASH (Respaldo en Free Tier)
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini Flash Latest...");
-                const dataFlash = await callAI("gemini-flash-latest", textMessage || "Hola");
+                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash...");
+                const dataFlash = await callAI("gemini-1.5-flash", textMessage || "Hola");
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
