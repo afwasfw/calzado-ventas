@@ -74,15 +74,6 @@ module.exports = async (req, res) => {
         let aiTextRaw = "";
         let success = false;
 
-        // DEBUG: Listar modelos disponibles una vez
-        try {
-            const listModels = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GOOGLE_AI_API_KEY}`);
-            const modelsData = await listModels.json();
-            console.log("[DEBUG] Modelos permitidos para tu Key:", JSON.stringify(modelsData.models?.map(m => m.name)));
-        } catch (e) {
-            console.error("[DEBUG] No se pudo listar modelos:", e.message);
-        }
-
         // --- FUNCIÓN PARA DESCARGAR MEDIOS (AUDIO) ---
         const downloadMedia = async (url) => {
             try {
@@ -105,7 +96,7 @@ module.exports = async (req, res) => {
             const parts = [];
             if (base64Audio) {
                 parts.push({ inlineData: { mimeType: "audio/ogg;codecs=opus", data: base64Audio } });
-                parts.push({ text: "He enviado un audio. Por favor, escúchalo y responde al cliente como Emssa Bot." });
+                parts.push({ text: "He enviado un audio. Por favor, escúchalo y responde al cliente como Emssa Bot. Sé amable y profesional." });
             } else {
                 parts.push({ 
                     text: `Eres "Emssa Bot", el asistente experto de Calzado Emssa en Trujillo. 
@@ -129,20 +120,19 @@ module.exports = async (req, res) => {
         // --- LÓGICA DE PROCESAMIENTO (AUDIO PRIMERO) ---
         if (isAudio && audioUrl) {
             try {
-                console.log(`[Audio] Intentando procesar URL: ${audioUrl}`);
+                console.log(`[Audio] Intentando procesar con Gemini 2.5 Flash...`);
                 const base64 = await downloadMedia(audioUrl);
                 
                 if (base64) {
-                    console.log(`[Audio] Descargado con éxito. Tamaño: ${base64.length} caracteres.`);
-                    // Probando con -latest que es obligatorio en algunos v1beta
-                    const dataAudio = await callAI("gemini-1.5-flash-latest", "", base64);
+                    // Usamos el modelo 2.5 Flash que está en tu lista y es el mejor para audio
+                    const dataAudio = await callAI("gemini-2.5-flash", "", base64);
                     
                     if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
                         aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
-                        console.log(`[AI Audio] Respuesta obtenida: ${aiTextRaw.substring(0, 50)}...`);
+                        console.log(`[AI Audio] Respuesta obtenida con éxito.`);
                         success = true;
                     } else {
-                        console.error("[AI Audio] Error o IA no devolvió texto:", JSON.stringify(dataAudio));
+                        console.error("[AI Audio] Error o formato no soportado:", JSON.stringify(dataAudio));
                     }
                 }
             } catch (e) {
@@ -165,11 +155,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // INTENTO 2 (Failover): GEMINI 1.5 FLASH (El respaldo más robusto)
+        // INTENTO 2 (Failover): GEMINI FLASH LATEST
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash...");
-                const dataFlash = await callAI("gemini-1.5-flash", textMessage || "Hola");
+                console.log("[AI] Usando Respaldo: Gemini Flash Latest...");
+                const dataFlash = await callAI("gemini-flash-latest", textMessage || "Hola");
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
