@@ -125,8 +125,8 @@ module.exports = async (req, res) => {
                 
                 if (base64) {
                     console.log(`[Audio] Descargado con éxito. Tamaño: ${base64.length} caracteres.`);
-                    // GEMINI 3 FLASH: El estándar de 2026 para audio nativo
-                    const dataAudio = await callAI("gemini-3-flash", "", base64);
+                    // Usamos la "Vieja Confiable": gemini-1.5-flash (Estable para Multimodal)
+                    const dataAudio = await callAI("gemini-1.5-flash", "", base64);
                     
                     if (dataAudio.candidates?.[0]?.content?.parts?.[0]?.text) {
                         aiTextRaw = dataAudio.candidates[0].content.parts[0].text;
@@ -156,11 +156,11 @@ module.exports = async (req, res) => {
             }
         }
 
-        // INTENTO 2 (Failover): GEMINI 3 FLASH (Respaldo ultra rápido)
+        // INTENTO 2 (Failover): GEMINI 1.5 FLASH (El respaldo más robusto)
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini 3 Flash...");
-                const dataFlash = await callAI("gemini-3-flash", textMessage || "Hola");
+                console.log("[AI] Usando Respaldo: Gemini 1.5 Flash...");
+                const dataFlash = await callAI("gemini-1.5-flash", textMessage || "Hola");
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
