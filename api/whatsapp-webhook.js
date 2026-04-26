@@ -106,11 +106,11 @@ module.exports = async (req, res) => {
         // --- PROCESAMIENTO DE AUDIO (NIVEL 1) ---
         if (isAudio) {
             try {
-                console.log(`[Audio] Transcribiendo con GEMINI 3 FLASH (Nivel 1)...`);
+                console.log(`[Audio] Transcribiendo con GEMINI 2.5 FLASH (Nivel 1)...`);
                 const base64 = await downloadMedia(data);
                 if (base64) {
                     const promptTrans = "ACTÚA COMO UN TRANSCRIPTOR MECÁNICO ESTRICTO. Escribe exactamente lo que escuchas en español. Solo texto plano, sin formato.";
-                    const dataTrans = await callAI("gemini-3-flash", promptTrans, base64);
+                    const dataTrans = await callAI("gemini-2.5-flash", promptTrans, base64);
                     const transcription = dataTrans.candidates?.[0]?.content?.parts?.[0]?.text;
                     
                     if (transcription && transcription.length > 2) {
@@ -136,17 +136,17 @@ module.exports = async (req, res) => {
             console.error("[AI] Error en Gemma 3:", e.message);
         }
 
-        // --- RESPALDO: GEMINI 3 FLASH ---
+        // --- RESPALDO: GEMINI 2.5 FLASH ---
         if (!success) {
             try {
-                console.log("[AI] Usando Respaldo: Gemini 3 Flash...");
-                const dataFlash = await callAI("gemini-3-flash", textMessage);
+                console.log("[AI] Usando Respaldo: Gemini 2.5 Flash...");
+                const dataFlash = await callAI("gemini-2.5-flash", textMessage);
                 if (dataFlash.candidates?.[0]?.content?.parts?.[0]?.text) {
                     aiTextRaw = dataFlash.candidates[0].content.parts[0].text;
                     success = true;
                 }
             } catch (e) {
-                console.error("[AI] Error en Gemini 3:", e.message);
+                console.error("[AI] Error en Gemini 2.5:", e.message);
             }
         }
 
