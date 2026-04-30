@@ -49,7 +49,8 @@ function App() {
     });
 
     if (error) {
-      setErrorMsg('Credenciales incorrectas. Verifique e intente nuevamente.');
+      console.error("[Login Error]:", error);
+      setErrorMsg(error.message || 'Error desconocido al iniciar sesión.');
     }
     setLoading(false);
   };
