@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Eye } from 'lucide-react';
+import { Search, Plus, Eye, Archive, Package } from 'lucide-react';
 import ModalNuevoLote from '../modals/ModalNuevoLote';
 import ModalDetalleProductoTerminado from '../modals/ModalDetalleProductoTerminado';
 import ModalGestionCategoriasCalzado from '../modals/ModalGestionCategoriasCalzado';
-
 
 import { supabase } from '../../lib/supabase';
 
@@ -15,7 +14,7 @@ export default function TabAlmacenZapatos() {
   const [selectedGood, setSelectedGood] = useState(null);
   const [finishedGoods, setFinishedGoods] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchFinishedGoods = async () => {
     try {
@@ -23,7 +22,7 @@ export default function TabAlmacenZapatos() {
       const { data, error } = await supabase
         .from('productos_finales')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('codigo_modelo', { ascending: true });
 
       if (error) throw error;
       setFinishedGoods(data || []);
@@ -38,148 +37,154 @@ export default function TabAlmacenZapatos() {
     fetchFinishedGoods();
   }, []);
 
-  // Filtrado Reactivo por CUALQUIER campo (código, color, taco, serie)
   const filteredGoods = finishedGoods.filter(item => {
     const rawSearch = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       (item.codigo_modelo || '').toLowerCase().includes(rawSearch) ||
       (item.color_fisico || '').toLowerCase().includes(rawSearch) ||
       (item.taco || '').toLowerCase().includes(rawSearch) ||
       (item.serie || '').toLowerCase().includes(rawSearch)
     );
+    const matchesArchive = showArchived ? !item.activo : item.activo;
+    return matchesSearch && matchesArchive;
   });
 
   return (
     <>
       <div className="max-w-7xl mx-auto px-6 py-8 md:py-12 animate-fade-in-up relative z-10">
         
-        {/* HEADER DEL ALMACÉN */}
+        {/* HEADER INDUSTRIAL */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
-              Almacén de Producto Terminado
+              Almacén Central
             </h1>
             <p className="text-gray-400 mt-2 font-medium">
-              Control de stock físico de calzado listo para despachar (Medido en Docenas).
+              Inventario físico de calzado terminado listo para despacho.
             </p>
           </div>
           
-          {/* BOTONES DE ACCION */}
-          <div className="flex gap-2">
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowArchived(!showArchived)}
+              className={`flex items-center gap-2 font-bold py-3 px-6 rounded-xl transition-all border ${
+                showArchived 
+                ? 'bg-red-500/10 text-red-500 border-red-500/30' 
+                : 'bg-transparent text-gray-400 border-[#333] hover:border-gray-500'
+              }`}
+            >
+              <Archive className="w-5 h-5" />
+              {showArchived ? 'Ver Activos' : 'Ver Archivados'}
+            </button>
             <button 
               onClick={() => setIsCategoryOpen(true)}
-              className="flex items-center gap-2 bg-[#1a1a1a] border border-[#333] text-gray-300 hover:text-brand-gold hover:border-brand-gold/50 px-5 py-3 rounded-xl transition-colors shrink-0 font-bold"
+              className="bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white px-6 py-3 rounded-xl transition-colors font-bold"
             >
               Categorías
             </button>
             <button 
               onClick={() => setIsBatchOpen(true)}
-              className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20b858] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(37,211,102,0.2)]"
+              className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20b858] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(37,211,102,0.3)]"
             >
               <Plus className="w-5 h-5" />
-              Ingresar Nuevo Lote
+              Ingresar Lote
             </button>
           </div>
         </div>
 
-
-        {/* BARRA DE BÚSQUEDA UNIVERSAL */}
-        <div className="mb-8">
-          <div className="relative w-full">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 w-full bg-[#1a1a1a] border border-[#333] rounded-xl py-4 text-white placeholder-gray-500 focus:outline-none focus:border-[#25D366] transition-colors font-medium text-lg shadow-xl shadow-black/20"
-              placeholder="🔎 Buscar por código, color, taco o serie de talla..."
-            />
+        {/* BUSCADOR DE ALTA VELOCIDAD */}
+        <div className="relative mb-10">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-500" />
           </div>
-          <p className="text-xs text-gray-500 mt-2 ml-2">El filtro operará instantáneamente sobre cualquier atributo de la tabla.</p>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-12 w-full bg-[#111] border border-[#222] rounded-xl py-4 text-white placeholder-gray-600 focus:outline-none focus:border-[#25D366] transition-colors font-medium text-lg"
+            placeholder="🔎 Buscar stock por Código, Color o Serie..."
+          />
         </div>
 
-        {/* LA TABLA DE ZAPATOS TERMINADOS */}
-        <div className="bg-[#1a1a1a] border border-[#333] rounded-2xl overflow-hidden shadow-2xl shadow-black/50">
+        {/* TABLA DE ALTA DENSIDAD */}
+        <div className="bg-[#111] border border-[#222] rounded-2xl overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#111] border-b border-[#333]">
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Código Industrial</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Color Físico</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Tipo de Taco</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold">Serie</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-[#25D366] font-semibold text-center">Stock (Docenas)</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-brand-gold font-semibold text-center">Mano Obra (S/)</th>
-                  <th className="py-4 px-6 text-xs uppercase tracking-widest text-gray-400 font-semibold text-center">Acciones</th>
+                <tr className="bg-[#0a0a0a] border-b border-[#222]">
+                  <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold">Miniatura</th>
+                  <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold">Identificación</th>
+                  <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold text-center">Especificación</th>
+                  <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-[#25D366] font-bold text-center">Stock Actual</th>
+                  <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold text-center">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#222]">
+              <tbody className="divide-y divide-[#1a1a1a]">
                   {loading ? (
                     <tr>
-                      <td colSpan="6" className="py-12 text-center text-gray-500 animate-pulse">Sincronizando con Supabase de fábrica...</td>
+                      <td colSpan="5" className="py-20 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <Package className="w-10 h-10 text-gray-700 animate-bounce" />
+                          <p className="text-gray-500 font-bold tracking-widest uppercase text-xs">Sincronizando Almacén...</p>
+                        </div>
+                      </td>
                     </tr>
                   ) : filteredGoods.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="py-12 text-center text-gray-500">No hay productos terminados en inventario.</td>
+                      <td colSpan="5" className="py-20 text-center">
+                        <p className="text-gray-600 font-medium">No se encontraron productos con estos criterios.</p>
+                      </td>
                     </tr>
                   ) : filteredGoods.map((item) => (
-                    <tr key={item.id} className="hover:bg-[#1f1f1f] transition-colors group">
+                    <tr key={item.id} className="hover:bg-[#161616] transition-colors group">
                       
-                      {/* CODIGO */}
-                      <td className="py-4 px-6">
-                        <span className="font-mono text-base tracking-widest font-bold text-white bg-white/10 px-3 py-1 rounded-lg border border-[#333]">
-                          {item.codigo_modelo}
-                        </span>
-                      </td>
-
-                      {/* COLOR FISICO */}
-                      <td className="py-4 px-6">
-                        <span className="text-sm font-medium text-gray-300">
-                          {item.color_fisico}
-                        </span>
-                      </td>
-
-                      {/* TIPO DE TACO */}
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-400">
-                          {item.taco}
-                        </span>
-                      </td>
-
-                      {/* SERIE */}
-                      <td className="py-4 px-6">
-                        <span className="text-sm text-gray-300 font-mono">{item.serie}</span>
-                      </td>
-
-                      {/* STOCK EN DOCENAS */}
-                      <td className="py-4 px-6 text-center">
-                        <div className={`inline-flex items-center justify-center px-4 py-1.5 rounded-lg border font-bold text-lg
-                          ${item.stock_docenas > 0 
-                            ? 'text-[#25D366] bg-[#25D366]/10 border-[#25D366]/20' 
-                            : 'text-red-500 bg-red-500/10 border-red-500/20'}`}
-                        >
-                          {item.stock_docenas} <span className="text-xs font-normal ml-1 opacity-70">Doc.</span>
+                      {/* MINIATURA */}
+                      <td className="py-3 px-6">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#333] bg-black">
+                          <img 
+                            src={item.foto_url || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=100'} 
+                            alt={item.codigo_modelo} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
                         </div>
                       </td>
 
-                      {/* MANO DE OBRA */}
-                      <td className="py-4 px-6 text-center">
-                        <span className="font-mono text-sm font-bold text-white">
-                          S/ {(item.costo_mano_obra_docena || 0).toFixed(2)}
-                        </span>
+                      {/* CODIGO Y COLOR */}
+                      <td className="py-3 px-6">
+                        <div className="flex flex-col">
+                          <span className="text-white font-mono font-bold text-lg leading-none">#{item.codigo_modelo}</span>
+                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">{item.color_fisico || 'COLOR BASE'}</span>
+                        </div>
+                      </td>
+
+                      {/* TACO Y SERIE */}
+                      <td className="py-3 px-6 text-center">
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs text-gray-300 font-semibold">Taco {item.taco}</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Ser. {item.serie}</span>
+                        </div>
+                      </td>
+
+                      {/* STOCK EN DOCENAS */}
+                      <td className="py-3 px-6 text-center">
+                        <div className={`inline-block px-4 py-1.5 rounded-xl border font-mono font-bold text-xl
+                          ${item.stock_docenas > 0 
+                            ? 'text-[#25D366] bg-[#25D366]/5 border-[#25D366]/20' 
+                            : 'text-red-500 bg-red-500/5 border-red-500/20'}`}
+                        >
+                          {item.stock_docenas} <span className="text-xs font-normal opacity-60">DOC</span>
+                        </div>
                       </td>
 
                       {/* ACCIONES */}
-                      <td className="py-4 px-6">
+                      <td className="py-3 px-6">
                         <div className="flex justify-center">
                           <button 
                             onClick={() => { setSelectedGood(item); setIsDetailsOpen(true); }}
-                            className="flex items-center gap-2 p-2 px-4 text-sm font-bold text-brand-gold bg-brand-gold/10 hover:bg-brand-gold hover:text-black rounded-lg transition-colors border border-brand-gold/20"
+                            className="p-2.5 bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white rounded-xl transition-all border border-transparent hover:border-[#444] group-hover:scale-105 active:scale-95"
+                            title="Ver Detalles y Movimientos"
                           >
-                            <Eye className="w-4 h-4" />
-                            Detalles
+                            <Eye className="w-5 h-5" />
                           </button>
                         </div>
                       </td>
@@ -189,7 +194,6 @@ export default function TabAlmacenZapatos() {
             </table>
           </div>
         </div>
-        
       </div>
 
       <ModalNuevoLote 
@@ -214,8 +218,6 @@ export default function TabAlmacenZapatos() {
         onClose={() => setIsCategoryOpen(false)}
         onUpdate={fetchFinishedGoods}
       />
-
-
     </>
   );
 }
