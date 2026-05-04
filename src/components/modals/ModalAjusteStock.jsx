@@ -127,6 +127,14 @@ export default function ModalAjusteStock({ isOpen, onClose, inventory = [], pres
                 </option>
               ))}
             </select>
+            {selectedItemId && (
+              <div className="mt-2 flex justify-between items-center px-1">
+                <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Referencia de Costo:</span>
+                <span className="text-xs font-mono text-brand-gold font-bold">
+                  S/ {(inventory.find(i => i.id === selectedItemId)?.costo_unitario || 0).toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
