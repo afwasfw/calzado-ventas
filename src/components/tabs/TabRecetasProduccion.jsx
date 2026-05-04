@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Info, Plus } from 'lucide-react';
+import { Search, Info, Plus, Beaker } from 'lucide-react';
 import ModalListaMaterialesEnvio from '../modals/ModalListaMaterialesEnvio';
 import ModalCrearReceta from '../modals/ModalCrearReceta';
 
