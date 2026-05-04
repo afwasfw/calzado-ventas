@@ -10,6 +10,7 @@ export default function TabRecetasProduccion() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShoe, setSelectedShoe] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [cloneData, setCloneData] = useState(null);
   const [showArchived, setShowArchived] = useState(false);
 
@@ -120,6 +121,13 @@ export default function TabRecetasProduccion() {
 
   const handleClone = (shoe) => {
     setCloneData(shoe);
+    setIsEditing(false);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEdit = (shoe) => {
+    setCloneData(shoe);
+    setIsEditing(true);
     setIsCreateModalOpen(true);
   };
 
@@ -150,7 +158,7 @@ export default function TabRecetasProduccion() {
               {showArchived ? 'Ver Activos' : 'Ver Archivados'}
             </button>
             <button 
-              onClick={() => { setCloneData(null); setIsCreateModalOpen(true); }}
+              onClick={() => { setCloneData(null); setIsEditing(false); setIsCreateModalOpen(true); }}
               className="flex items-center gap-2 bg-[#d86145] hover:bg-[#c25035] text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-none"
             >
               <Plus className="w-5 h-5" />
@@ -194,46 +202,53 @@ export default function TabRecetasProduccion() {
                 <div className="h-56 bg-[#0a0a0a] relative overflow-hidden flex items-center justify-center">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
                   {/* Etiqueta Superior */}
-                  <div className="absolute top-4 left-4 z-20">
-                    <span className="bg-black/60 backdrop-blur-md text-white text-xs font-mono font-bold px-3 py-1 rounded-lg border border-white/10 uppercase tracking-widest">
-                      {shoe.codigo_modelo || shoe.code}
-                    </span>
-                  </div>
-                  
+                {/* IMAGEN DEL ZAPATO CON ASPECT RATIO FIJO */}
+                <div className="relative aspect-[4/3] overflow-hidden bg-[#111]">
                   <img 
-                    src={shoe.foto_url || '/shoepics/mocasin.png'} 
+                    src={shoe.foto_url || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=400'} 
                     alt={shoe.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80 group-hover:opacity-100 mix-blend-luminosity hover:mix-blend-normal"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100"
                   />
+                  <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                    <span className="text-[10px] font-mono font-bold text-brand-peach uppercase">#{shoe.codigo_modelo}</span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-transparent opacity-60"></div>
                 </div>
 
                 {/* CARD FOOTER COMPACTO */}
-                <div className="p-4 bg-[#111] group-hover:bg-[#161616] transition-colors border-t border-[#222]">
+                <div className="p-4 bg-[#111] group-hover:bg-[#161616] transition-colors flex-1 flex flex-col justify-between border-t border-[#222]">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h3 className="text-white font-bold text-base leading-tight">{shoe.name}</h3>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
-                        Costo Fábrica: <span className="text-brand-gold">S/ {shoe.factoryCost.toFixed(2)}</span>
+                      <h3 className="text-white font-bold text-base leading-tight group-hover:text-brand-peach transition-colors">{shoe.name}</h3>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 flex items-center gap-1">
+                        Costo: <span className="text-brand-gold">S/ {shoe.factoryCost.toFixed(2)}</span>
+                        <span className="text-[8px] bg-[#222] px-1 rounded text-gray-400">DOC</span>
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">P. Mayorista</p>
-                      <p className="text-base font-mono font-bold text-brand-peach">S/ {shoe.precio ? shoe.precio.toFixed(2) : '0.00'}</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Venta</p>
+                      <p className="text-base font-mono font-bold text-brand-gold">S/ {shoe.precio ? shoe.precio.toFixed(2) : '0.00'}</p>
                     </div>
                   </div>
                   
-                  <div className="flex gap-2 pt-2 border-t border-white/5">
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5">
                     <button 
                       onClick={(e) => { e.stopPropagation(); setSelectedShoe(shoe); }}
-                      className="flex-1 bg-[#222] hover:bg-[#333] text-gray-300 text-[10px] font-bold uppercase py-2 rounded-lg transition-colors"
+                      className="flex-[1] bg-[#222] hover:bg-[#333] text-gray-300 text-[9px] font-bold uppercase py-2 rounded-lg transition-colors border border-transparent hover:border-gray-600"
                     >
-                      Ver Detalle
+                      Ver
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleEdit(shoe); }}
+                      className="flex-[1] bg-brand-peach/10 hover:bg-brand-peach/20 text-brand-peach text-[9px] font-bold uppercase py-2 rounded-lg transition-colors border border-brand-peach/20"
+                    >
+                      Editar
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleClone(shoe); }}
-                      className="flex-1 bg-brand-gold/10 hover:bg-brand-gold/20 text-brand-gold text-[10px] font-bold uppercase py-2 rounded-lg transition-colors"
+                      className="flex-[1] bg-brand-gold/10 hover:bg-brand-gold/20 text-brand-gold text-[9px] font-bold uppercase py-2 rounded-lg transition-colors border border-brand-gold/20"
                     >
-                      Clonar
+                      Clon
                     </button>
                   </div>
                 </div>
@@ -271,14 +286,16 @@ export default function TabRecetasProduccion() {
       {/* Renderizado condicional del Modal de Creación */}
       <ModalCrearReceta 
         isOpen={isCreateModalOpen} 
-        onClose={() => { setIsCreateModalOpen(false); setCloneData(null); }} 
+        onClose={() => { setIsCreateModalOpen(false); setCloneData(null); setIsEditing(false); }} 
         categories={categories}
         units={units}
         materials={materials}
         initialData={cloneData}
+        isEditing={isEditing}
         onSuccess={() => {
           setIsCreateModalOpen(false);
           setCloneData(null);
+          setIsEditing(false);
           fetchRecipesAndCategories();
         }}
       />

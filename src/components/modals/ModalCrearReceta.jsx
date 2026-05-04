@@ -4,7 +4,7 @@ import { X, Save, Plus, Trash2, Beaker } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function ModalCrearReceta({ isOpen, onClose, categories = [], units = [], materials = [], onSuccess, initialData = null }) {
+export default function ModalCrearReceta({ isOpen, onClose, categories = [], units = [], materials = [], onSuccess, initialData = null, isEditing = false }) {
   // Estado local
   const [formData, setFormData] = useState({
     codigo_modelo: '',
@@ -34,18 +34,17 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
       fetchShoeCategories();
       
       if (initialData) {
-        // Lógica de Clonado: Cargamos los datos del modelo original
+        // Si estamos editando o clonando, cargamos los datos
         setFormData({
-          codigo_modelo: `${initialData.codigo_modelo}-CLON`, // Sugerencia de nombre
+          codigo_modelo: isEditing ? initialData.codigo_modelo : `${initialData.codigo_modelo}-CLON`,
           nombre: initialData.nombre,
-          precio: initialData.precio,
+          precio: initialData.precio_docena_mayorista || initialData.precio,
           color: initialData.color_fisico,
           taco: initialData.taco,
           serie: initialData.serie,
           categoria_id: initialData.categoria_id
         });
         
-        // Cargamos los materiales de la receta original
         if (initialData.recetas_produccion && initialData.recetas_produccion.length > 0) {
           const mappedIngredients = initialData.recetas_produccion.map(r => ({
             category: r.inventario_materiales?.categoria || '',
@@ -55,19 +54,28 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
             merma: r.margen_merma || '5'
           }));
           setIngredients(mappedIngredients);
+        } else if (initialData.recipe && initialData.recipe.length > 0) {
+           // Fallback for UI-mapped recipes
+           const mappedIngredients = initialData.recipe.map(r => ({
+            category: r.category || '',
+            name: r.material || r.name || '',
+            amount: r.amount,
+            unit: r.unit || '',
+            merma: r.merma || '5'
+          }));
+          setIngredients(mappedIngredients);
         }
         
         if (initialData.foto_url) {
           setFotoBase64(initialData.foto_url);
         }
       } else {
-        // Reset if no initialData
         setFormData({ codigo_modelo: '', nombre: '', precio: '', color: '', taco: '', serie: '', categoria_id: '' });
         setIngredients([{ category: '', name: '', amount: '', unit: '', merma: '5' }]);
         setFotoBase64(null);
       }
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, isEditing]);
 
   if (!isOpen) return null;
 
@@ -79,8 +87,8 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
   const handleCategoryChange = (idx, newCategory) => {
     const updated = [...ingredients];
     updated[idx].category = newCategory;
-    updated[idx].name = ''; // Reset the sub-insumo when category changes
-    updated[idx].unit = ''; // Reset the unit when category changes
+    updated[idx].name = ''; 
+    updated[idx].unit = ''; 
     setIngredients(updated);
   };
 
@@ -89,8 +97,8 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
     const selectedMat = materials.find(m => m.nombre === newMaterialName);
     updated[idx].name = newMaterialName;
     if (selectedMat) {
-      updated[idx].unit = selectedMat.unidad_medida; // Auto-assign the correct unit!
-      updated[idx].category = selectedMat.categoria; // Auto-assign the correct category!
+      updated[idx].unit = selectedMat.unidad_medida;
+      updated[idx].category = selectedMat.categoria;
     }
     setIngredients(updated);
   };
@@ -119,51 +127,74 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.codigo_modelo || !formData.nombre || !formData.precio || !formData.color || !formData.taco || !formData.serie || !formData.categoria_id) {
-      toast.error("Llena todos los campos comerciales, atributos y categoría del modelo.");
+      toast.error("Llena todos los campos del modelo.");
       return;
     }
 
-    
-    // Validate ingredients
     const validIngredients = ingredients.filter(i => i.name && i.amount);
     if (validIngredients.length === 0) {
-      toast.error("La receta debe tener al menos un insumo válido con cantidad.");
+      toast.error("La receta debe tener al menos un insumo.");
       return;
     }
 
     try {
       setIsSubmitting(true);
       
-      // 0. Obtener el costo de mano de obra de la categoría seleccionada
       const selectedCat = shoeCategories.find(c => c.id === formData.categoria_id);
       const laborCost = selectedCat ? selectedCat.costo_mano_obra_docena : 0;
 
-      // 1. Crear el producto final (Modelo Base)
-      const { data: nProducto, error: pError } = await supabase
-        .from('productos_finales')
-        .insert([{
-          codigo_modelo: formData.codigo_modelo,
-          nombre: formData.nombre,
-          color_fisico: formData.color,
-          taco: formData.taco,
-          serie: formData.serie,
-          categoria_id: formData.categoria_id,
-          costo_mano_obra_docena: laborCost,
-          precio_docena_mayorista: parseFloat(formData.precio),
-          stock_docenas: 0,
-          foto_url: fotoBase64 || null
-        }])
-        .select('id')
-        .single();
+      let productoId = initialData?.id;
 
-        
-      if (pError) throw pError;
+      if (isEditing && productoId) {
+        // UPDATE EXISTING PRODUCT
+        const { error: pError } = await supabase
+          .from('productos_finales')
+          .update({
+            codigo_modelo: formData.codigo_modelo,
+            nombre: formData.nombre,
+            color_fisico: formData.color,
+            taco: formData.taco,
+            serie: formData.serie,
+            categoria_id: formData.categoria_id,
+            costo_mano_obra_docena: laborCost,
+            precio_docena_mayorista: parseFloat(formData.precio),
+            foto_url: fotoBase64 || null
+          })
+          .eq('id', productoId);
+
+        if (pError) throw pError;
+
+        // Delete old recipe items to re-insert new ones (Cleanest way to handle BOM updates)
+        await supabase.from('recetas_produccion').delete().eq('producto_id', productoId);
+
+      } else {
+        // CREATE NEW PRODUCT
+        const { data: nProducto, error: pError } = await supabase
+          .from('productos_finales')
+          .insert([{
+            codigo_modelo: formData.codigo_modelo,
+            nombre: formData.nombre,
+            color_fisico: formData.color,
+            taco: formData.taco,
+            serie: formData.serie,
+            categoria_id: formData.categoria_id,
+            costo_mano_obra_docena: laborCost,
+            precio_docena_mayorista: parseFloat(formData.precio),
+            stock_docenas: 0,
+            foto_url: fotoBase64 || null
+          }])
+          .select('id')
+          .single();
+
+        if (pError) throw pError;
+        productoId = nProducto.id;
+      }
       
-      // 2. Insertar los items de la receta (B.O.M)
+      // INSERT RECIPE ITEMS
       const recipeInserts = validIngredients.map(ing => {
         const matId = materials.find(m => m.nombre === ing.name)?.id;
         return {
-          producto_id: nProducto.id,
+          producto_id: productoId,
           material_id: matId,
           cantidad_por_docena: parseFloat(ing.amount),
           margen_merma: parseFloat(ing.merma || 0)
@@ -173,22 +204,14 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
       const { error: rError } = await supabase.from('recetas_produccion').insert(recipeInserts);
       if (rError) throw rError;
 
-      toast.success(`Modelo ${formData.codigo_modelo} y su receta de ${recipeInserts.length} insumos creada exitosamente.`);
-      setFormData({ codigo_modelo: '', nombre: '', precio: '', color: '', taco: '', serie: '', categoria_id: '' });
-
-      setIngredients([{ category: '', name: '', amount: '', unit: '', merma: '5' }]);
-      setFotoBase64(null);
+      toast.success(isEditing ? 'Ficha actualizada correctamente' : 'Nuevo modelo creado correctamente');
       
       if (onSuccess) onSuccess();
       else onClose();
 
     } catch (err) {
-      console.error('Error al guardar modelo/receta:', err.message);
-      if (err.message.includes('unique')) {
-         toast.error(`Ya existe un modelo con el código ${formData.codigo_modelo}. Usa uno distinto.`);
-      } else {
-         toast.error('Hubo un error guardando en Base de datos.');
-      }
+      console.error('Error saving recipe:', err.message);
+      toast.error('Error al guardar en la base de datos.');
     } finally {
       setIsSubmitting(false);
     }
@@ -207,11 +230,15 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
         
         <div className="flex items-start gap-4 mb-8">
           <div className="p-3 bg-brand-peach/10 rounded-xl text-brand-peach shadow-inner">
-            <Plus className="w-6 h-6" />
+            {isEditing ? <Beaker className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
           </div>
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">Nuevo Modelo Maestro</h2>
-            <p className="text-sm text-gray-400">Diseña la receta base (Plantilla) para calcular consumos automáticos.</p>
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-1 tracking-tight">
+              {isEditing ? 'Editar Ficha Técnica' : 'Nuevo Modelo Maestro'}
+            </h2>
+            <p className="text-sm text-gray-400">
+              {isEditing ? 'Modifica los consumos y atributos del modelo.' : 'Diseña la receta base para calcular consumos automáticos.'}
+            </p>
           </div>
         </div>
 
