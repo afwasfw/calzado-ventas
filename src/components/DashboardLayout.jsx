@@ -20,6 +20,7 @@ import TabInventarioInsumos from './tabs/TabInventarioInsumos';
 import TabAlmacenZapatos from './tabs/TabAlmacenZapatos';
 import TabRecetasProduccion from './tabs/TabRecetasProduccion';
 import TabGestionPedidos from './tabs/TabGestionPedidos';
+import TabAsistenteIA from './tabs/TabAsistenteIA';
 
 
 
@@ -204,13 +205,7 @@ export default function DashboardLayout({ session, handleLogout }) {
 
         {activeTab === 'kardex' && <TabKardex />}
 
-        {activeTab === 'asistentes' && (
-          <div className="flex flex-col items-center justify-center h-[80vh] text-gray-500 animate-fade-in font-serif italic text-center px-6">
-            <BrainCircuit className="w-20 h-20 mb-6 text-brand-gold/40 animate-pulse" />
-            <h3 className="text-2xl text-white not-italic font-bold tracking-widest uppercase mb-2">Núcleo de Inteligencia Emssa</h3>
-            <p className="max-w-md text-gray-400">Sincronizando modelos Gemini 2.5 Flash y Evolution API para el asistente omnicanal...</p>
-          </div>
-        )}
+        {activeTab === 'asistentes' && <TabAsistenteIA />}
 
 
       </main>
