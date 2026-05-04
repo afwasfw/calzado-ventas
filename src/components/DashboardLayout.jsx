@@ -7,7 +7,11 @@ import {
   Menu,
   X,
   Archive,
-  History
+  History,
+  ClipboardList,
+  Layers,
+  ShoppingBag,
+  BrainCircuit
 } from 'lucide-react';
 import TabKardex from './tabs/TabKardex';
 import TabResumen from './tabs/TabResumen';
@@ -26,11 +30,12 @@ export default function DashboardLayout({ session, handleLogout }) {
 
   const navItems = [
     { id: 'resumen', label: 'Panel de Control', icon: LayoutDashboard },
-    { id: 'pedidos', label: 'Gestión de Pedidos', icon: Package },
+    { id: 'inventario', label: 'Inventario Insumos', icon: Layers },
+    { id: 'recetario', label: 'Fichas Técnicas', icon: ClipboardList },
     { id: 'almacen', label: 'Producto Terminado', icon: Archive },
-    { id: 'inventario', label: 'Inventario Insumos', icon: Settings },
-    { id: 'recetario', label: 'Fichas de Calzado', icon: Settings },
-    { id: 'kardex', label: 'Movimientos (Kárdex)', icon: History },
+    { id: 'pedidos', label: 'Gestión de Pedidos', icon: ShoppingBag },
+    { id: 'kardex', label: 'Kárdex de Movimientos', icon: History },
+    { id: 'asistentes', label: 'Asistentes IA', icon: BrainCircuit },
   ];
 
 
@@ -198,6 +203,14 @@ export default function DashboardLayout({ session, handleLogout }) {
         {activeTab === 'recetario' && <TabRecetasProduccion />}
 
         {activeTab === 'kardex' && <TabKardex />}
+
+        {activeTab === 'asistentes' && (
+          <div className="flex flex-col items-center justify-center h-[80vh] text-gray-500 animate-fade-in font-serif italic text-center px-6">
+            <BrainCircuit className="w-20 h-20 mb-6 text-brand-gold/40 animate-pulse" />
+            <h3 className="text-2xl text-white not-italic font-bold tracking-widest uppercase mb-2">Núcleo de Inteligencia Emssa</h3>
+            <p className="max-w-md text-gray-400">Sincronizando modelos Gemini 2.5 Flash y Evolution API para el asistente omnicanal...</p>
+          </div>
+        )}
 
 
       </main>
