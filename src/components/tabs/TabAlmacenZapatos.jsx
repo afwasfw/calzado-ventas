@@ -77,12 +77,6 @@ export default function TabAlmacenZapatos() {
               {showArchived ? 'Ver Activos' : 'Ver Archivados'}
             </button>
             <button 
-              onClick={() => setIsCategoryOpen(true)}
-              className="bg-[#1a1a1a] border border-[#333] text-gray-400 hover:text-white px-6 py-3 rounded-xl transition-colors font-bold"
-            >
-              Categorías
-            </button>
-            <button 
               onClick={() => setIsBatchOpen(true)}
               className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20b858] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(37,211,102,0.3)]"
             >

@@ -100,52 +100,6 @@ export default function ModalDetalleProductoTerminado({ isOpen, onClose, goodDat
               </div>
             </div>
 
-            {/* SECCIÓN DE COSTOS DE MANO DE OBRA */}
-            <div className="bg-[#1a1a1a] p-5 rounded-2xl border border-brand-gold/20 shadow-lg">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="text-brand-gold text-xs font-bold uppercase tracking-widest">Costos de Producción (Mano Obra)</h4>
-                {!isEditing && (
-                  <button 
-                    onClick={() => setIsEditing(true)}
-                    className="text-gray-500 hover:text-brand-gold transition-colors"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Pago por Docena (Destajo Total)</p>
-                  {isEditing ? (
-                    <div className="flex gap-2">
-                       <input 
-                        type="number"
-                        value={manoObra}
-                        onChange={(e) => setManoObra(e.target.value)}
-                        className="w-full bg-[#111] border border-brand-gold rounded-lg px-4 py-2 text-white font-mono text-lg focus:outline-none"
-                        autoFocus
-                      />
-                      <button 
-                        onClick={handleSave}
-                        disabled={isSaving}
-                        className="bg-brand-gold text-black p-2 rounded-lg hover:bg-white transition-colors disabled:opacity-50"
-                      >
-                        <Save className="w-5 h-5" />
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-2xl font-mono font-bold text-white tracking-tight">
-                      S/ {parseFloat(manoObra).toFixed(2)}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <p className="text-[10px] text-gray-500 mt-4 italic">
-                * Este costo incluye todos los procesos (cortado, aparado, armado, acabado).
-              </p>
-            </div>
-
             <div className="pt-4 flex justify-end">
               <button 
                 onClick={onClose}
