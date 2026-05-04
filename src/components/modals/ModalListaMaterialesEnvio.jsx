@@ -52,10 +52,17 @@ export default function ModalListaMaterialesEnvio({ isOpen, onClose, shoeData, o
               </div>
               
               <div className="border-t border-[#333] pt-4 mt-2">
-                <p className="text-gray-500 text-xs font-bold uppercase tracking-wider mb-2">Precio de Venta Catálogo</p>
-                <div className="flex items-end gap-1 text-white">
-                  <span className="text-2xl font-mono font-bold">S/ {shoeData.precio.toFixed(2)}</span>
-                  <span className="text-sm font-medium text-gray-400 pb-1">x Docena</span>
+                <div className="flex gap-4">
+                  <div className="text-left">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Costo de Fábrica</p>
+                    <p className="text-xl font-mono font-bold text-brand-gold">S/ {(shoeData.factoryCost || 0).toFixed(2)}</p>
+                    <p className="text-[9px] text-gray-600 font-bold uppercase">Insumos + Merma</p>
+                  </div>
+                  <div className="text-left border-l border-[#333] pl-4">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">Precio Sugerido</p>
+                    <p className="text-xl font-mono font-bold text-white">S/ {(shoeData.precio || 0).toFixed(2)}</p>
+                    <p className="text-[9px] text-gray-600 font-bold uppercase">Por Docena</p>
+                  </div>
                 </div>
               </div>
             </div>
