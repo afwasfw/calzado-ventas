@@ -199,9 +199,6 @@ export default function TabRecetasProduccion() {
                 onClick={() => setSelectedShoe(shoe)}
               >
                 {/* INYECTANDO LA IMAGEN POR DEFECTO PARA LA DB VACIA */}
-                <div className="h-56 bg-[#0a0a0a] relative overflow-hidden flex items-center justify-center">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10"></div>
-                  {/* Etiqueta Superior */}
                 {/* IMAGEN DEL ZAPATO CON ASPECT RATIO FIJO */}
                 <div className="relative aspect-[4/3] overflow-hidden bg-[#111]">
                   <img 
