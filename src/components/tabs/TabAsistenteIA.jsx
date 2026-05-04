@@ -47,25 +47,40 @@ export default function TabAsistenteIA() {
     setInput('');
     setIsLoading(true);
 
-    // --- Lógica de Simulación de Respuesta Inteligente ---
-    // En el futuro, aquí conectaremos con la API de Gemini
-    setTimeout(() => {
-      let response = `Estoy analizando los datos para: "${input}".`;
-      
-      if (input.toLowerCase().includes('stock') || input.toLowerCase().includes('agota')) {
-        response = "He detectado que el 'Cuero Negro Premium' está por debajo de tu stock de alerta (84.5m restantes). ¿Te gustaría ver un reporte de proveedores?";
-      } else if (input.toLowerCase().includes('lote') || input.toLowerCase().includes('7001')) {
-        response = "El lote LOT-DEMO-VALEMS (Modelo 7001) se registró correctamente con un costo de fabricación de S/ 120.00 por docena. El margen de beneficio estimado es del 40%.";
-      }
+    // --- LLAMADA REAL A LA API DEL ASISTENTE ---
+    try {
+      const response = await fetch('/api/ai-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          message: input,
+          history: messages.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
 
-      const assistantMsg = { 
+      const data = await response.json();
+      
+      if (data.response) {
+        const assistantMsg = { 
+          role: 'assistant', 
+          content: data.response, 
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+      } else {
+        throw new Error('Sin respuesta');
+      }
+    } catch (err) {
+      console.error('Error IA:', err);
+      const errorMsg = { 
         role: 'assistant', 
-        content: response, 
+        content: 'Lo siento, tuve un problema de conexión con mi núcleo de inteligencia. ¿Podrías intentar de nuevo?', 
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
       };
-      setMessages(prev => [...prev, assistantMsg]);
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
