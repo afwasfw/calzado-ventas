@@ -181,76 +181,106 @@ export default function TabRecetasProduccion() {
           />
         </div>
 
-        {/* GRID DE RECETAS / CATÁLOGO */}
+        {/* TABLA DE PRODUCCIÓN INDUSTRIAL (B.O.M) */}
         {loading ? (
           <div className="flex justify-center items-center h-64 border border-[#333] border-dashed rounded-2xl">
             <p className="text-gray-500 animate-pulse font-bold tracking-widest uppercase">Sincronizando Recetas con Supabase...</p>
           </div>
         ) : filteredShoes.length === 0 ? (
-          <div className="flex justify-center items-center h-64 border border-[#333] border-dashed rounded-2xl">
-            <p className="text-gray-500 font-bold tracking-widest uppercase">El catálogo está vacío. Crea tu primer modelo base.</p>
+          <div className="flex flex-col items-center justify-center py-20 bg-[#111] rounded-3xl border border-[#222] border-dashed">
+            <Beaker className="w-16 h-16 text-gray-700 mb-4" />
+            <p className="text-gray-500 font-medium text-lg">No hay modelos registrados con este código.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredShoes.map((shoe) => (
-              <div 
-                key={shoe.id} 
-                className="bg-[#1a1a1a] border border-[#333] rounded-2xl overflow-hidden hover:border-[#555] transition-all cursor-pointer group shadow-xl shadow-black/40 flex flex-col"
-                onClick={() => setSelectedShoe(shoe)}
-              >
-                {/* INYECTANDO LA IMAGEN POR DEFECTO PARA LA DB VACIA */}
-                {/* IMAGEN DEL ZAPATO CON ASPECT RATIO FIJO */}
-                <div className="relative aspect-[4/3] overflow-hidden bg-[#111]">
-                  <img 
-                    src={shoe.foto_url || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=400'} 
-                    alt={shoe.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                  />
-                  <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                    <span className="text-[10px] font-mono font-bold text-brand-peach uppercase">#{shoe.codigo_modelo}</span>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#111] via-transparent to-transparent opacity-60"></div>
-                </div>
+          <div className="bg-[#111] border border-[#222] rounded-2xl overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#0a0a0a] border-b border-[#222]">
+                    <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold">Miniatura</th>
+                    <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold">Código Modelo</th>
+                    <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold">Taco / Serie</th>
+                    <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold text-right">Costo Fábrica</th>
+                    <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold text-right">Precio Venta (DOC)</th>
+                    <th className="py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500 font-bold text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1a1a1a]">
+                  {filteredShoes.map((shoe) => (
+                    <tr 
+                      key={shoe.id} 
+                      className="group hover:bg-[#161616] transition-colors border-b border-[#1a1a1a]"
+                    >
+                      {/* MINIATURA */}
+                      <td className="py-3 px-6">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#333] bg-black">
+                          <img 
+                            src={shoe.foto_url || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=100'} 
+                            alt={shoe.codigo_modelo} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        </div>
+                      </td>
 
-                {/* CARD FOOTER COMPACTO */}
-                <div className="p-4 bg-[#111] group-hover:bg-[#161616] transition-colors flex-1 flex flex-col justify-between border-t border-[#222]">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <h3 className="text-white font-bold text-base leading-tight group-hover:text-brand-peach transition-colors">{shoe.name}</h3>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 flex items-center gap-1">
-                        Costo: <span className="text-brand-gold">S/ {shoe.factoryCost.toFixed(2)}</span>
-                        <span className="text-[8px] bg-[#222] px-1 rounded text-gray-400">DOC</span>
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">Venta</p>
-                      <p className="text-base font-mono font-bold text-brand-gold">S/ {shoe.precio ? shoe.precio.toFixed(2) : '0.00'}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setSelectedShoe(shoe); }}
-                      className="flex-[1] bg-[#222] hover:bg-[#333] text-gray-300 text-[9px] font-bold uppercase py-2 rounded-lg transition-colors border border-transparent hover:border-gray-600"
-                    >
-                      Ver
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleEdit(shoe); }}
-                      className="flex-[1] bg-brand-peach/10 hover:bg-brand-peach/20 text-brand-peach text-[9px] font-bold uppercase py-2 rounded-lg transition-colors border border-brand-peach/20"
-                    >
-                      Editar
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleClone(shoe); }}
-                      className="flex-[1] bg-brand-gold/10 hover:bg-brand-gold/20 text-brand-gold text-[9px] font-bold uppercase py-2 rounded-lg transition-colors border border-brand-gold/20"
-                    >
-                      Clon
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                      {/* CÓDIGO */}
+                      <td className="py-3 px-6">
+                        <div className="flex flex-col">
+                          <span className="text-brand-peach font-mono font-bold text-lg tracking-tight">#{shoe.codigo_modelo}</span>
+                          <span className="text-[9px] text-gray-500 uppercase font-bold tracking-wider">{shoe.color_fisico || 'COLOR BASE'}</span>
+                        </div>
+                      </td>
+
+                      {/* TACO / SERIE */}
+                      <td className="py-3 px-6">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#222] px-2 py-0.5 rounded text-[10px] font-bold text-gray-300 border border-[#333]">Taco {shoe.taco}</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Ser. {shoe.serie}</span>
+                        </div>
+                      </td>
+
+                      {/* COSTO FÁBRICA */}
+                      <td className="py-3 px-6 text-right">
+                        <span className="text-sm font-mono font-bold text-brand-gold">S/ {shoe.factoryCost.toFixed(2)}</span>
+                        <p className="text-[8px] text-gray-600 font-bold uppercase">Insumos + Merma</p>
+                      </td>
+
+                      {/* PRECIO VENTA */}
+                      <td className="py-3 px-6 text-right">
+                        <span className="text-sm font-mono font-bold text-white">S/ {shoe.precio ? shoe.precio.toFixed(2) : '0.00'}</span>
+                        <p className="text-[8px] text-gray-600 font-bold uppercase">Docena</p>
+                      </td>
+
+                      {/* ACCIONES */}
+                      <td className="py-3 px-6">
+                        <div className="flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => setSelectedShoe(shoe)}
+                            className="p-2 bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white rounded-lg transition-colors border border-transparent hover:border-[#444]"
+                            title="Ver Detalle / B.O.M"
+                          >
+                            <Beaker className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleEdit(shoe)}
+                            className="p-2 bg-brand-peach/10 hover:bg-brand-peach/20 text-brand-peach rounded-lg transition-colors border border-brand-peach/20"
+                            title="Editar Ficha"
+                          >
+                            <Plus className="w-4 h-4 rotate-45" />
+                          </button>
+                          <button 
+                            onClick={() => handleClone(shoe)}
+                            className="p-2 bg-brand-gold/10 hover:bg-brand-gold/20 text-brand-gold rounded-lg transition-colors border border-brand-gold/20"
+                            title="Clonar Modelo"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
