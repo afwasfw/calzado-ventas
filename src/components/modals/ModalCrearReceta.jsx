@@ -4,7 +4,7 @@ import { X, Save, Plus, Trash2, Beaker } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
 
-export default function ModalCrearReceta({ isOpen, onClose, categories = [], units = [], materials = [], onSuccess }) {
+export default function ModalCrearReceta({ isOpen, onClose, categories = [], units = [], materials = [], onSuccess, initialData = null }) {
   // Estado local
   const [formData, setFormData] = useState({
     codigo_modelo: '',
@@ -17,13 +17,11 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
   });
   
   const [shoeCategories, setShoeCategories] = useState([]);
-
-  
   const [fotoBase64, setFotoBase64] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [ingredients, setIngredients] = useState([
-    { category: '', name: '', amount: '', unit: '' }
+    { category: '', name: '', amount: '', unit: '', merma: '5' }
   ]);
 
   const fetchShoeCategories = async () => {
@@ -34,14 +32,48 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
   React.useEffect(() => {
     if (isOpen) {
       fetchShoeCategories();
+      
+      if (initialData) {
+        // Lógica de Clonado: Cargamos los datos del modelo original
+        setFormData({
+          codigo_modelo: `${initialData.codigo_modelo}-CLON`, // Sugerencia de nombre
+          nombre: initialData.nombre,
+          precio: initialData.precio,
+          color: initialData.color_fisico,
+          taco: initialData.taco,
+          serie: initialData.serie,
+          categoria_id: initialData.categoria_id
+        });
+        
+        // Cargamos los materiales de la receta original
+        if (initialData.recetas_produccion && initialData.recetas_produccion.length > 0) {
+          const mappedIngredients = initialData.recetas_produccion.map(r => ({
+            category: r.inventario_materiales?.categoria || '',
+            name: r.inventario_materiales?.nombre || '',
+            amount: r.cantidad_por_docena,
+            unit: r.inventario_materiales?.unidad_medida || '',
+            merma: r.margen_merma || '5'
+          }));
+          setIngredients(mappedIngredients);
+        }
+        
+        if (initialData.foto_url) {
+          setFotoBase64(initialData.foto_url);
+        }
+      } else {
+        // Reset if no initialData
+        setFormData({ codigo_modelo: '', nombre: '', precio: '', color: '', taco: '', serie: '', categoria_id: '' });
+        setIngredients([{ category: '', name: '', amount: '', unit: '', merma: '5' }]);
+        setFotoBase64(null);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialData]);
 
   if (!isOpen) return null;
 
 
   const addIngredientRow = () => {
-    setIngredients([...ingredients, { category: '', name: '', amount: '', unit: '' }]);
+    setIngredients([...ingredients, { category: '', name: '', amount: '', unit: '', merma: '5' }]);
   };
 
   const handleCategoryChange = (idx, newCategory) => {
@@ -133,7 +165,8 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
         return {
           producto_id: nProducto.id,
           material_id: matId,
-          cantidad_por_docena: parseFloat(ing.amount)
+          cantidad_por_docena: parseFloat(ing.amount),
+          margen_merma: parseFloat(ing.merma || 0)
         };
       });
 
@@ -143,7 +176,7 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
       toast.success(`Modelo ${formData.codigo_modelo} y su receta de ${recipeInserts.length} insumos creada exitosamente.`);
       setFormData({ codigo_modelo: '', nombre: '', precio: '', color: '', taco: '', serie: '', categoria_id: '' });
 
-      setIngredients([{ category: '', name: '', amount: '', unit: '' }]);
+      setIngredients([{ category: '', name: '', amount: '', unit: '', merma: '5' }]);
       setFotoBase64(null);
       
       if (onSuccess) onSuccess();
@@ -290,14 +323,26 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
                       step="any"
                       value={ing.amount}
                       onChange={(e) => updateIngredient(idx, 'amount', e.target.value)}
-                      className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-brand-gold font-mono focus:border-brand-peach outline-none" 
+                      className="flex-[1.5] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-brand-gold font-mono focus:border-brand-peach outline-none" 
                       placeholder="Cant." 
                     />
+
+                    <div className="flex-[1.5] relative group/merma">
+                      <input 
+                        type="number" 
+                        step="any"
+                        value={ing.merma}
+                        onChange={(e) => updateIngredient(idx, 'merma', e.target.value)}
+                        className="w-full bg-[#1a1a1a] border border-brand-gold/20 rounded px-3 py-2 text-sm text-brand-gold font-mono focus:border-brand-peach outline-none" 
+                        placeholder="% M" 
+                      />
+                      <span className="absolute -top-6 left-0 text-[9px] bg-black text-brand-gold px-1 rounded opacity-0 group-hover/merma:opacity-100 transition-opacity">% Merma</span>
+                    </div>
                     
                     <select 
                       value={ing.unit}
                       onChange={(e) => updateIngredient(idx, 'unit', e.target.value)}
-                      className="flex-[2] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-gray-300 focus:border-brand-peach outline-none appearance-none"
+                      className="flex-[1.5] bg-[#1a1a1a] border border-[#333] rounded px-3 py-2 text-sm text-gray-300 focus:border-brand-peach outline-none appearance-none"
                     >
                       <option value="">Medida...</option>
                       {units.map((unit, unitIdx) => (

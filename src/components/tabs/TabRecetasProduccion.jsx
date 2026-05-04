@@ -10,6 +10,8 @@ export default function TabRecetasProduccion() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedShoe, setSelectedShoe] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [cloneData, setCloneData] = useState(null);
+  const [showArchived, setShowArchived] = useState(false);
 
   const [shoeDatabase, setShoeDatabase] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -58,14 +60,16 @@ export default function TabRecetasProduccion() {
           *,
           recetas_produccion (
             cantidad_por_docena,
+            margen_merma,
             inventario_materiales (
               nombre,
               categoria,
-              unidad_medida
+              unidad_medida,
+              costo_unitario
             )
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('codigo_modelo', { ascending: true });
 
       if (error) throw error;
       
@@ -78,10 +82,19 @@ export default function TabRecetasProduccion() {
           unit: r.inventario_materiales?.unidad_medida || ''
         }));
 
+        // Calcular costo de fábrica (Insumos + Merma)
+        const factoryCost = (item.recetas_produccion || []).reduce((acc, r) => {
+          const cost = r.inventario_materiales?.costo_unitario || 0;
+          const qty = r.cantidad_por_docena || 0;
+          const waste = 1 + ((r.margen_merma || 0) / 100);
+          return acc + (cost * qty * waste);
+        }, 0);
+
         return {
           ...item,
           name: item.nombre,
           precio: item.precio_docena_mayorista,
+          factoryCost: factoryCost,
           recipe: mappedRecipe
         };
       });
@@ -98,10 +111,17 @@ export default function TabRecetasProduccion() {
     fetchRecipesAndCategories();
   }, []);
 
-  const filteredShoes = shoeDatabase.filter(shoe => 
-    (shoe.codigo_modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (shoe.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredShoes = shoeDatabase.filter(shoe => {
+    const matchesSearch = (shoe.codigo_modelo || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         (shoe.nombre || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesArchive = showArchived ? !shoe.activo : shoe.activo;
+    return matchesSearch && matchesArchive;
+  });
+
+  const handleClone = (shoe) => {
+    setCloneData(shoe);
+    setIsCreateModalOpen(true);
+  };
 
   return (
     <>
@@ -111,20 +131,32 @@ export default function TabRecetasProduccion() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight flex items-center gap-3">
-              Fichas de Calzado (B.O.M)
+              Fichas Técnicas (B.O.M)
             </h1>
             <p className="text-gray-400 mt-2 font-medium">
-              El ADN de tu producción. Define cuántos insumos cuesta fabricar cada modelo.
+              Estructura de costos y materiales. Define el ADN de tu producción.
             </p>
           </div>
           
-          <button 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 bg-[#d86145] hover:bg-[#c25035] text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-none"
-          >
-            <Plus className="w-5 h-5" />
-            Crear Nuevo Modelo
-          </button>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setShowArchived(!showArchived)}
+              className={`flex items-center gap-2 font-bold py-3 px-6 rounded-xl transition-all border ${
+                showArchived 
+                ? 'bg-brand-gold text-black border-brand-gold' 
+                : 'bg-transparent text-gray-400 border-[#333] hover:border-gray-500'
+              }`}
+            >
+              {showArchived ? 'Ver Activos' : 'Ver Archivados'}
+            </button>
+            <button 
+              onClick={() => { setCloneData(null); setIsCreateModalOpen(true); }}
+              className="flex items-center gap-2 bg-[#d86145] hover:bg-[#c25035] text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-none"
+            >
+              <Plus className="w-5 h-5" />
+              Nuevo Modelo
+            </button>
+          </div>
         </div>
 
         {/* BARRA DE BÚSQUEDA */}
@@ -175,15 +207,34 @@ export default function TabRecetasProduccion() {
                   />
                 </div>
 
-                {/* CARD FOOTER */}
-                <div className="p-5 flex justify-between items-center bg-[#111] group-hover:bg-[#161616] transition-colors h-full">
-                  <div>
-                    <h3 className="text-white font-bold text-lg mb-1">{shoe.name}</h3>
-                    <p className="text-xs text-gray-500 font-medium">Receta de: {shoe.recipe?.length || 0} componentes</p>
+                {/* CARD FOOTER COMPACTO */}
+                <div className="p-4 bg-[#111] group-hover:bg-[#161616] transition-colors border-t border-[#222]">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-white font-bold text-base leading-tight">{shoe.name}</h3>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">
+                        Costo Fábrica: <span className="text-brand-gold">S/ {shoe.factoryCost.toFixed(2)}</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-0.5">P. Mayorista</p>
+                      <p className="text-base font-mono font-bold text-brand-peach">S/ {shoe.precio ? shoe.precio.toFixed(2) : '0.00'}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">P. Mayorista</p>
-                    <p className="text-lg font-mono font-bold text-brand-peach">S/ {shoe.precio ? shoe.precio.toFixed(2) : '0.00'}</p>
+                  
+                  <div className="flex gap-2 pt-2 border-t border-white/5">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setSelectedShoe(shoe); }}
+                      className="flex-1 bg-[#222] hover:bg-[#333] text-gray-300 text-[10px] font-bold uppercase py-2 rounded-lg transition-colors"
+                    >
+                      Ver Detalle
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleClone(shoe); }}
+                      className="flex-1 bg-brand-gold/10 hover:bg-brand-gold/20 text-brand-gold text-[10px] font-bold uppercase py-2 rounded-lg transition-colors"
+                    >
+                      Clonar
+                    </button>
                   </div>
                 </div>
               </div>
@@ -200,14 +251,19 @@ export default function TabRecetasProduccion() {
         shoeData={selectedShoe}
         onDelete={async (id) => {
           try {
-            const { error } = await supabase.from('productos_finales').delete().eq('id', id);
+            // Borrado lógico: Cambiar activo a false
+            const { error } = await supabase
+              .from('productos_finales')
+              .update({ activo: showArchived }) // Si está en archivados, lo reactiva; si no, lo archiva.
+              .eq('id', id);
+              
             if (error) throw error;
-            toast.success('Modelo y su receta eliminada del catálogo.');
+            toast.success(showArchived ? 'Modelo reactivado.' : 'Modelo movido al archivo.');
             setSelectedShoe(null);
             fetchRecipesAndCategories();
           } catch(err) {
-            console.error('Error deleting:', err.message);
-            toast.error('Error al borrar. Si el producto tiene stock o historial, no podrás borrarlo.');
+            console.error('Error archiving:', err.message);
+            toast.error('Error al cambiar estado del modelo.');
           }
         }}
       />
@@ -215,12 +271,14 @@ export default function TabRecetasProduccion() {
       {/* Renderizado condicional del Modal de Creación */}
       <ModalCrearReceta 
         isOpen={isCreateModalOpen} 
-        onClose={() => setIsCreateModalOpen(false)} 
+        onClose={() => { setIsCreateModalOpen(false); setCloneData(null); }} 
         categories={categories}
         units={units}
         materials={materials}
+        initialData={cloneData}
         onSuccess={() => {
           setIsCreateModalOpen(false);
+          setCloneData(null);
           fetchRecipesAndCategories();
         }}
       />

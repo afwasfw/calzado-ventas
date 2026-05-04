@@ -116,17 +116,20 @@ export default function ModalListaMaterialesEnvio({ isOpen, onClose, shoeData, o
             <div className="mt-6 flex justify-end gap-3 items-center">
               <button 
                 onClick={async () => {
-                   if(window.confirm(`¿Seguro que deseas eliminar permanentemente el modelo ${shoeData.code}?`)) {
+                   const action = shoeData.activo ? 'archivar' : 'reactivar';
+                   if(window.confirm(`¿Seguro que deseas ${action} el modelo ${shoeData.codigo_modelo || shoeData.code}?`)) {
                      setIsDeleting(true);
                      await onDelete(shoeData.id);
                      setIsDeleting(false);
                    }
                 }}
                 disabled={isDeleting}
-                className="px-5 py-2.5 text-sm font-bold text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
+                className={`px-5 py-2.5 text-sm font-bold rounded-lg transition-colors flex items-center gap-2 ${
+                  shoeData.activo ? 'text-red-500 hover:bg-red-500/10' : 'text-green-500 hover:bg-green-500/10'
+                }`}
               >
                 <Trash2 className="w-4 h-4" />
-                {isDeleting ? 'Borrando...' : 'Eliminar Receta'}
+                {isDeleting ? (shoeData.activo ? 'Archivando...' : 'Reactivando...') : (shoeData.activo ? 'Archivar Modelo' : 'Reactivar Modelo')}
               </button>
               <button 
                 onClick={() => alert("La edición de recetas estará disponible en la próxima actualización.")}
