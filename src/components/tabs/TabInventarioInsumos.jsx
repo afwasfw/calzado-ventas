@@ -25,6 +25,7 @@ export default function TabInventarioInsumos() {
   // Estado real de Supabase
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showInactive, setShowInactive] = useState(false); // Nuevo estado para filtrar
 
   // Consulta en Tiempo Promedio a Supabase
   const fetchInventoryAndCategories = async () => {
@@ -70,14 +71,21 @@ export default function TabInventarioInsumos() {
     fetchInventoryAndCategories();
   }, []);
 
-  const deleteInsumo = async (id, nombre) => {
+  const toggleInsumoStatus = async (id, nombre, currentStatus) => {
     setActiveDropdown(null);
+    const actionText = currentStatus ? 'desactivar' : 'reactivar';
+    const confirmButtonClass = currentStatus ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500';
+
     toast((t) => (
       <div className="flex flex-col gap-4 p-2 bg-[#1a1a1a]">
         <p className="text-white font-medium text-sm">
-          ¿Eliminar definitivamente el insumo <strong className="text-brand-gold">{nombre}</strong>?
+          ¿Deseas <strong className={currentStatus ? "text-red-500" : "text-green-500"}>{actionText}</strong> el insumo <strong className="text-brand-gold">{nombre}</strong>?
           <br /><br />
-          <span className="text-gray-400 text-xs">Esta acción no se puede deshacer y borrará su historial de stock.</span>
+          <span className="text-gray-400 text-xs">
+            {currentStatus 
+              ? "El material ya no aparecerá en las listas de producción pero se mantendrá en el historial." 
+              : "El material volverá a estar disponible para recetas y producción."}
+          </span>
         </p>
         <div className="flex justify-end gap-2 mt-2">
           <button 
@@ -87,21 +95,30 @@ export default function TabInventarioInsumos() {
             Cancelar
           </button>
           <button 
-            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white rounded font-bold text-sm min-w-20"
+            className={`px-3 py-1.5 ${confirmButtonClass} text-white rounded font-bold text-sm min-w-20`}
             onClick={async () => {
               toast.dismiss(t.id);
               try {
-                const { error } = await supabase.from('inventario_materiales').delete().eq('id', id);
+                const { error } = await supabase
+                  .from('inventario_materiales')
+                  .update({ activo: !currentStatus })
+                  .eq('id', id);
+
                 if (error) throw error;
-                setInventory(inventory.filter(item => item.id !== id));
-                toast.success('Insumo eliminado del almacén');
+                
+                // Actualizar estado local
+                setInventory(inventory.map(item => 
+                  item.id === id ? { ...item, activo: !currentStatus } : item
+                ));
+
+                toast.success(`Insumo ${currentStatus ? 'desactivado' : 'reactivado'} correctamente`);
               } catch (err) {
-                console.error('Error al borrar insumo:', err.message);
-                toast.error('No se pudo eliminar el insumo.');
+                console.error('Error al cambiar estado de insumo:', err.message);
+                toast.error('Ocurrió un error en la base de datos.');
               }
             }}
           >
-            Sí, Eliminar
+            Sí, {currentStatus ? 'Desactivar' : 'Reactivar'}
           </button>
         </div>
       </div>
@@ -122,10 +139,11 @@ export default function TabInventarioInsumos() {
 
   // Filtrado reactivo en la data real
   const filteredInventory = inventory.filter(item => {
+    const matchesStatus = showInactive ? !item.activo : (item.activo !== false);
     const matchesCategory = activeCategory === 'Todos' || item.categoria === activeCategory;
     const matchesSearch = (item.nombre || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
                           (item.categoria || '').toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesStatus && matchesCategory && matchesSearch;
   });
 
   return (
@@ -152,14 +170,26 @@ export default function TabInventarioInsumos() {
           </div>
 
           
-          {/* BOTON DE ACCION PRINCIPAL */}
-          <button 
-            onClick={() => setIsRegistrationOpen(true)}
-            className="flex items-center gap-2 bg-brand-gold hover:bg-[#c2a15c] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(212,178,113,0.3)]"
-          >
-            <Plus className="w-5 h-5" />
-            Registrar Insumo
-          </button>
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <button 
+              onClick={() => setShowInactive(!showInactive)}
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-all font-bold text-sm ${
+                showInactive 
+                ? 'bg-red-500/10 border-red-500/50 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]' 
+                : 'bg-[#1a1a1a] border-[#333] text-gray-400 hover:text-white'
+              }`}
+            >
+              {showInactive ? 'Viendo Archivados' : 'Ver Archivados'}
+            </button>
+
+            <button 
+              onClick={() => setIsRegistrationOpen(true)}
+              className="flex items-center gap-2 bg-brand-gold hover:bg-[#c2a15c] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(212,178,113,0.3)]"
+            >
+              <Plus className="w-5 h-5" />
+              Registrar Insumo
+            </button>
+          </div>
         </div>
 
         {/* BARRA DE BUSQUEDA Y FILTROS POR CATEGORÍA */}
@@ -298,10 +328,12 @@ export default function TabInventarioInsumos() {
                               Ver Historial de Cambios
                             </button>
                             <button 
-                              onClick={() => deleteInsumo(item.id, item.nombre)}
-                              className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+                              onClick={() => toggleInsumoStatus(item.id, item.nombre, item.activo !== false)}
+                              className={`w-full text-left px-4 py-3 text-sm transition-colors ${
+                                item.activo !== false ? 'text-red-500 hover:bg-red-500/10' : 'text-green-500 hover:bg-green-500/10'
+                              }`}
                             >
-                              Eliminar Insumo
+                              {item.activo !== false ? 'Desactivar Insumo' : 'Reactivar Insumo'}
                             </button>
                           </div>
                         )}
@@ -363,9 +395,13 @@ export default function TabInventarioInsumos() {
                       <Plus className="w-5 h-5" />
                     </button>
                     <button 
-                      onClick={() => deleteInsumo(item.id, item.nombre)}
-                      className="p-2.5 bg-red-500/10 text-red-500 rounded-lg border border-red-500/20 active:bg-red-500 active:text-white transition-colors"
-                      title="Eliminar"
+                      onClick={() => toggleInsumoStatus(item.id, item.nombre, item.activo !== false)}
+                      className={`p-2.5 rounded-lg border transition-colors ${
+                        item.activo !== false 
+                        ? 'bg-red-500/10 text-red-500 border-red-500/20 active:bg-red-500 active:text-white' 
+                        : 'bg-green-500/10 text-green-500 border-green-500/20 active:bg-green-500 active:text-white'
+                      }`}
+                      title={item.activo !== false ? 'Desactivar' : 'Reactivar'}
                     >
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
