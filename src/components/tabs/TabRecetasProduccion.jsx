@@ -94,6 +94,7 @@ export default function TabRecetasProduccion() {
         return {
           ...item,
           name: item.nombre,
+          code: item.codigo_modelo, // Mapeo crítico para que el modal de detalle funcione
           precio: item.precio_docena_mayorista,
           factoryCost: factoryCost,
           recipe: mappedRecipe
@@ -206,10 +207,10 @@ export default function TabRecetasProduccion() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1a1a1a]">
-                  {filteredShoes.map((shoe) => (
                     <tr 
                       key={shoe.id} 
-                      className="group hover:bg-[#161616] transition-colors border-b border-[#1a1a1a]"
+                      onClick={() => setSelectedShoe(shoe)}
+                      className="group hover:bg-[#161616] transition-colors border-b border-[#1a1a1a] cursor-pointer"
                     >
                       {/* MINIATURA */}
                       <td className="py-3 px-6">
