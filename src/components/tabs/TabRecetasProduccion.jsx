@@ -47,7 +47,7 @@ export default function TabRecetasProduccion() {
       // Traer inventario_materiales
       const { data: matData, error: matError } = await supabase
         .from('inventario_materiales')
-        .select('id, nombre, categoria, unidad_medida')
+        .select('id, nombre, categoria, unidad_medida, activo')
         .order('nombre', { ascending: true });
 
       if (!matError && matData) {
@@ -94,7 +94,7 @@ export default function TabRecetasProduccion() {
         return {
           ...item,
           name: item.nombre,
-          code: item.codigo_modelo, // Mapeo crítico para que el modal de detalle funcione
+          code: item.codigo_modelo, 
           precio: item.precio_docena_mayorista,
           factoryCost: factoryCost,
           recipe: mappedRecipe

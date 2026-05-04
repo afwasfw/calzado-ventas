@@ -315,9 +315,12 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
 
             <div className="p-4 space-y-3">
               {ingredients.map((ing, idx) => {
-                const availableMaterials = ing.category 
-                  ? materials.filter(m => m.categoria === ing.category)
-                  : materials;
+                const availableMaterials = materials.filter(m => {
+                  const matchesCat = ing.category ? m.categoria === ing.category : true;
+                  const isActive = m.activo !== false;
+                  const isAlreadySelected = m.nombre === ing.name;
+                  return matchesCat && (isActive || isAlreadySelected);
+                });
 
                 return (
                   <div key={idx} className="flex gap-2 items-center">
