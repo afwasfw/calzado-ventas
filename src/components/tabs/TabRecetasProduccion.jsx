@@ -242,13 +242,13 @@ export default function TabRecetasProduccion() {
 
                       {/* COSTO FÁBRICA */}
                       <td className="py-3 px-6 text-right">
-                        <span className="text-sm font-mono font-bold text-brand-gold">S/ {shoe.factoryCost.toFixed(2)}</span>
+                        <span className="text-sm font-mono font-bold text-brand-gold">S/ {(shoe.factoryCost || 0).toFixed(2)}</span>
                         <p className="text-[8px] text-gray-600 font-bold uppercase">Insumos + Merma</p>
                       </td>
 
                       {/* PRECIO VENTA */}
                       <td className="py-3 px-6 text-right">
-                        <span className="text-sm font-mono font-bold text-white">S/ {shoe.precio ? shoe.precio.toFixed(2) : '0.00'}</span>
+                        <span className="text-sm font-mono font-bold text-white">S/ {(shoe.precio || 0).toFixed(2)}</span>
                         <p className="text-[8px] text-gray-600 font-bold uppercase">Docena</p>
                       </td>
 
@@ -256,21 +256,21 @@ export default function TabRecetasProduccion() {
                       <td className="py-3 px-6">
                         <div className="flex items-center justify-center gap-2">
                           <button 
-                            onClick={() => setSelectedShoe(shoe)}
+                            onClick={(e) => { e.stopPropagation(); setSelectedShoe(shoe); }}
                             className="p-2 bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white rounded-lg transition-colors border border-transparent hover:border-[#444]"
                             title="Ver Detalle / B.O.M"
                           >
                             <Beaker className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => handleEdit(shoe)}
+                            onClick={(e) => { e.stopPropagation(); handleEdit(shoe); }}
                             className="p-2 bg-brand-peach/10 hover:bg-brand-peach/20 text-brand-peach rounded-lg transition-colors border border-brand-peach/20"
                             title="Editar Ficha"
                           >
                             <Plus className="w-4 h-4 rotate-45" />
                           </button>
                           <button 
-                            onClick={() => handleClone(shoe)}
+                            onClick={(e) => { e.stopPropagation(); handleClone(shoe); }}
                             className="p-2 bg-brand-gold/10 hover:bg-brand-gold/20 text-brand-gold rounded-lg transition-colors border border-brand-gold/20"
                             title="Clonar Modelo"
                           >
