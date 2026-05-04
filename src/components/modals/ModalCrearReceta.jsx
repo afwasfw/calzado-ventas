@@ -218,8 +218,8 @@ export default function ModalCrearReceta({ isOpen, onClose, categories = [], uni
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm animate-fade-in p-4 overflow-y-auto pt-24 md:pt-32">
-      <div className="bg-[#161616] border border-[#333] rounded-2xl w-full max-w-4xl p-6 md:p-10 shadow-2xl relative shadow-brand-peach/10 my-8">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm animate-fade-in p-4 overflow-y-auto pt-40 md:pt-64">
+      <div className="bg-[#161616] border border-[#333] rounded-2xl w-full max-w-4xl p-6 md:p-10 shadow-2xl relative shadow-brand-peach/10 mb-20">
         
         <button 
           onClick={onClose}
