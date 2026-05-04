@@ -207,6 +207,7 @@ export default function TabRecetasProduccion() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1a1a1a]">
+                  {filteredShoes.map((shoe) => (
                     <tr 
                       key={shoe.id} 
                       onClick={() => setSelectedShoe(shoe)}
