@@ -25,7 +25,9 @@ export default function TabInventarioInsumos() {
   // Estado real de Supabase
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showInactive, setShowInactive] = useState(false); // Nuevo estado para filtrar
+  const [showInactive, setShowInactive] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1); // Estado para la página actual
+  const itemsPerPage = 8; // Tu "número mágico" para no scrolear
 
   // Consulta en Tiempo Promedio a Supabase
   const fetchInventoryAndCategories = async () => {
@@ -132,9 +134,9 @@ export default function TabInventarioInsumos() {
   };
   
   const getStatusText = (stock_actual, stock_alerta) => {
-    if (stock_actual > stock_alerta * 2) return 'Sano';
-    if (stock_actual > stock_alerta) return 'Medio';
-    return 'Crítico';
+    if (stock_actual > stock_alerta * 2) return 'Bueno';
+    if (stock_actual > stock_alerta) return 'Regular';
+    return 'Bajo';
   };
 
   // Filtrado reactivo en la data real
@@ -145,6 +147,16 @@ export default function TabInventarioInsumos() {
                           (item.categoria || '').toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesCategory && matchesSearch;
   });
+
+  // Lógica de Paginado
+  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedInventory = filteredInventory.slice(startIndex, startIndex + itemsPerPage);
+
+  // Resetear a página 1 si cambian los filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeCategory, showInactive]);
 
   return (
     <>
@@ -267,11 +279,11 @@ export default function TabInventarioInsumos() {
                   <tr>
                     <td colSpan="5" className="py-12 text-center text-gray-500 animate-pulse font-serif italic">Sincronizando con Supabase de fábrica...</td>
                   </tr>
-                ) : filteredInventory.length === 0 ? (
+                ) : paginatedInventory.length === 0 ? (
                   <tr>
                     <td colSpan="5" className="py-12 text-center text-gray-500">No se encontraron insumos con esos criterios.</td>
                   </tr>
-                ) : filteredInventory.map((item) => (
+                ) : paginatedInventory.map((item) => (
                   <tr key={item.id} className="hover:bg-[#1f1f1f] transition-colors group">
                     <td className="py-4 px-6">
                       <span className="font-medium text-white">{item.nombre}</span>
@@ -347,10 +359,25 @@ export default function TabInventarioInsumos() {
           
           {filteredInventory.length > 0 && (
             <div className="bg-[#111] border-t border-[#333] p-4 flex justify-between items-center text-sm text-gray-500">
-              <p>Mostrando {filteredInventory.length} insumos registrados</p>
-              <div className="flex gap-2 text-xs">
-                <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] opacity-50 cursor-not-allowed uppercase font-bold tracking-widest">Ant.</button>
-                <button className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] opacity-50 cursor-not-allowed uppercase font-bold tracking-widest">Sig.</button>
+              <p>Mostrando {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredInventory.length)} de {filteredInventory.length} insumos</p>
+              <div className="flex items-center gap-4 text-xs">
+                <span className="text-gray-400">Página {currentPage} de {totalPages || 1}</span>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] disabled:opacity-30 disabled:cursor-not-allowed uppercase font-bold tracking-widest transition-colors"
+                  >
+                    Ant.
+                  </button>
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="px-3 py-1 border border-[#333] rounded hover:bg-[#222] disabled:opacity-30 disabled:cursor-not-allowed uppercase font-bold tracking-widest transition-colors"
+                  >
+                    Sig.
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -360,10 +387,10 @@ export default function TabInventarioInsumos() {
         <div className="md:hidden space-y-4">
           {loading ? (
             <div className="py-20 text-center text-brand-gold/50 animate-pulse font-serif italic">Sincronizando almacén móvil...</div>
-          ) : filteredInventory.length === 0 ? (
+          ) : paginatedInventory.length === 0 ? (
             <div className="py-20 text-center text-gray-500 bg-[#161616] rounded-2xl border border-dashed border-[#333]">El almacén móvil está vacío.</div>
           ) : (
-            filteredInventory.map((item) => (
+            paginatedInventory.map((item) => (
               <div key={item.id} className="bg-[#1a1a1a] border border-[#333] rounded-2xl p-5 shadow-lg active:scale-[0.98] transition-all overflow-hidden relative group">
                 {/* Indicador de estado lateral */}
                 <div className={`absolute top-0 left-0 w-1.5 h-full ${item.stock_actual <= item.stock_alerta ? 'bg-red-500' : 'bg-brand-gold'}`}></div>

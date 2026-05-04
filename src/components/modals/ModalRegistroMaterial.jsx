@@ -10,6 +10,7 @@ export default function ModalRegistroMaterial({ isOpen, onClose, onSuccess, cate
     unidad_medida: '',
     stock_actual: '',
     stock_alerta: '',
+    monto_invertido: '', // Nuevo campo para el dinero
     detalles: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,14 +34,16 @@ export default function ModalRegistroMaterial({ isOpen, onClose, onSuccess, cate
           categoria: formData.categoria,
           unidad_medida: formData.unidad_medida,
           stock_actual: parseFloat(formData.stock_actual) || 0,
-          stock_alerta: parseInt(formData.stock_alerta) || 5, // 5 por defecto si está vacío
-          detalles_proveedor: formData.detalles
+          stock_alerta: parseInt(formData.stock_alerta) || 5,
+          costo_unitario: (parseFloat(formData.monto_invertido) || 0) / (parseFloat(formData.stock_actual) || 1), // Cálculo automático
+          detalles_proveedor: formData.detalles,
+          activo: true
         }]);
 
       if (error) throw error;
       
       // Limpiar y cerrar exitosamente
-      setFormData({ nombre: '', categoria: '', unidad_medida: '', stock_actual: '', stock_alerta: '', detalles: '' });
+      setFormData({ nombre: '', categoria: '', unidad_medida: '', stock_actual: '', stock_alerta: '', monto_invertido: '', detalles: '' });
       toast.success("Insumo registrado correctamente en el almacén.");
       
       if (onSuccess) onSuccess();
@@ -110,26 +113,38 @@ export default function ModalRegistroMaterial({ isOpen, onClose, onSuccess, cate
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Stock / Cantidad Inicial</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Stock Inicial</label>
               <input 
                 type="number" 
                 step="any"
                 value={formData.stock_actual}
                 onChange={(e) => setFormData({...formData, stock_actual: e.target.value})}
                 className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-brand-gold font-mono focus:outline-none focus:border-brand-gold transition-colors" 
-                placeholder="Ej. 150" 
+                placeholder="Ej. 10" 
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Alerta Crítica (Mínimo)</label>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Inversión Total (S/)</label>
               <input 
                 type="number" 
-                value={formData.stock_alerta}
-                onChange={(e) => setFormData({...formData, stock_alerta: e.target.value})}
-                className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-red-500 font-mono focus:outline-none focus:border-red-500 transition-colors" 
-                placeholder="Punto de alerta..." 
+                step="any"
+                value={formData.monto_invertido}
+                onChange={(e) => setFormData({...formData, monto_invertido: e.target.value})}
+                className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-green-500 font-mono focus:outline-none focus:border-green-500 transition-colors" 
+                placeholder="Ej. 100" 
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Alerta de Stock (Mínimo)</label>
+            <input 
+              type="number" 
+              value={formData.stock_alerta}
+              onChange={(e) => setFormData({...formData, stock_alerta: e.target.value})}
+              className="w-full bg-[#111] border border-[#333] rounded-xl px-4 py-3 text-red-500 font-mono focus:outline-none focus:border-red-500 transition-colors" 
+              placeholder="Avisar cuando quede menos de..." 
+            />
           </div>
 
           <div>
