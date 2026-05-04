@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Info, Plus, Beaker } from 'lucide-react';
+import { Search, Info, Plus, Beaker, Edit3 } from 'lucide-react';
 import ModalListaMaterialesEnvio from '../modals/ModalListaMaterialesEnvio';
 import ModalCrearReceta from '../modals/ModalCrearReceta';
 
@@ -267,7 +267,7 @@ export default function TabRecetasProduccion() {
                             className="p-2 bg-brand-peach/10 hover:bg-brand-peach/20 text-brand-peach rounded-lg transition-colors border border-brand-peach/20"
                             title="Editar Ficha"
                           >
-                            <Plus className="w-4 h-4 rotate-45" />
+                            <Edit3 className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleClone(shoe); }}
