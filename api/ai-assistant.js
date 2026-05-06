@@ -28,37 +28,45 @@ export default async function handler(req, res) {
       supabase.from('productos_finales').select('codigo_modelo, nombre, color_fisico, stock_docenas')
     ]);
 
-    const context = `
-      SISTEMA: Emssa Valems (Fábrica de Calzado en Trujillo).
-      INVENTARIO: ${JSON.stringify(insumos?.slice(0,15))}
-      PRODUCTOS: ${JSON.stringify(zapatos?.slice(0,15))}
-      
-      INSTRUCCIÓN CRÍTICA: 
-      - Responde directamente al usuario en español.
-      - NO incluyas opciones (Option 1, 2, 3).
-      - NO incluyas explicaciones de tu rol ni metadatos.
-      - Sé profesional y amable.
+    const systemContext = `
+Eres el asistente virtual experto de la fábrica de calzado Emssa Valems en Trujillo.
+
+REGLAS DE ORO (OBLIGATORIAS):
+1. RESPONDE ÚNICA Y EXCLUSIVAMENTE CON EL MENSAJE FINAL QUE LEERÁ EL USUARIO.
+2. NUNCA escribas tus pensamientos internos, ni "Option 1", ni "Role:", ni "Goal:".
+3. NO des opciones múltiples, elige tú la mejor respuesta y entrégala directamente.
+4. Sé amable, profesional, directo y conversacional.
+
+DATOS EN TIEMPO REAL:
+- Insumos: ${JSON.stringify(insumos?.slice(0,15))}
+- Productos: ${JSON.stringify(zapatos?.slice(0,15))}
     `;
 
-    // --- 2. LLAMADA A GEMMA 4 ---
+    // --- 2. LLAMADA A GEMMA 4 (CON ESTRUCTURA DE ROLES OFICIAL) ---
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key=${apiKey}`;
     
     const resAI = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `${context}\n\nUsuario dice: "${message}"\nRespuesta final:` }] }]
+        systemInstruction: {
+          parts: [{ text: systemContext }]
+        },
+        contents: [
+          { role: "user", parts: [{ text: message }] }
+        ]
       })
     });
 
     const dataAI = await resAI.json();
-    let aiText = dataAI.candidates?.[0]?.content?.parts?.[0]?.text || "No pude generar una respuesta.";
+    let aiText = dataAI.candidates?.[0]?.content?.parts?.[0]?.text || "No pude generar una respuesta. ¿Podrías intentar de nuevo?";
 
-    // Limpieza de seguridad por si Gemma sigue siendo charlatana
+    // Limpieza extrema por si el modelo ignora la estructura
     if (aiText.includes("Option 3")) {
-       aiText = aiText.split("Option 3 (Professional/Corporate):")[1] || aiText;
+       const parts = aiText.split(/Option 3[^:]*:/);
+       if (parts.length > 1) aiText = parts[1];
     }
-    aiText = aiText.replace(/\* Role:[\s\S]*?\* /g, "").trim();
+    aiText = aiText.replace(/\*.*?\*/g, "").replace(/Role:[\s\S]*?Goal:/gi, "").trim();
 
     return res.status(200).json({ response: aiText });
 
