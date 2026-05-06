@@ -2,75 +2,102 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
 
+// Modelo optimizado para chat conversacional
+const MODEL = 'gemini-2.0-flash';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(200).send('Active');
 
   try {
-    const { message } = req.body;
+    const { message, history = [] } = req.body;
     const apiKey = process.env.GOOGLE_AI_API_KEY;
 
     if (!apiKey) {
-      return res.status(200).json({ response: "Error: No se encontró la clave GOOGLE_AI_API_KEY." });
+      return res.status(200).json({ response: "Error: Falta la clave GOOGLE_AI_API_KEY en las variables de entorno." });
     }
 
     // --- COMANDO DE DIAGNÓSTICO ---
-    if (message.toUpperCase() === "LISTAR MODELOS") {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      const modelList = data.models?.map(m => m.name.replace('models/', '')).join(', ') || "No se pudo obtener la lista.";
-      return res.status(200).json({ response: `Modelos disponibles: ${modelList}` });
+    if (message?.toUpperCase() === "LISTAR MODELOS") {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      const d = await r.json();
+      const list = d.models?.map(m => m.name.replace('models/', '')).join(', ') || "Sin lista.";
+      return res.status(200).json({ response: `Modelos disponibles: ${list}` });
     }
 
-    // --- 1. OBTENER CONTEXTO DE NEGOCIO ---
-    const [{ data: insumos }, { data: zapatos }] = await Promise.all([
-      supabase.from('inventario_materiales').select('nombre, stock_actual, unidad_medida, stock_alerta'),
-      supabase.from('productos_finales').select('codigo_modelo, nombre, color_fisico, stock_docenas')
+    // --- 1. DATOS REALES DE SUPABASE ---
+    const [{ data: insumos }, { data: zapatos }, { data: kardex }] = await Promise.all([
+      supabase.from('inventario_materiales').select('nombre, stock_actual, unidad_medida, stock_alerta').eq('activo', true),
+      supabase.from('productos_finales').select('codigo_modelo, nombre, color_fisico, stock_docenas').eq('activo', true),
+      supabase.from('auditoria_inventario').select('nombre_entidad, cantidad, motivo, created_at').order('created_at', { ascending: false }).limit(10)
     ]);
 
-    const systemContext = `
-Eres el asistente virtual experto de la fábrica de calzado Emssa Valems en Trujillo.
+    // --- 2. INSTRUCCIÓN DEL SISTEMA (LIMPIA Y CLARA) ---
+    const sistemaInstruccion = `Eres "Cortex", el asistente inteligente de la fábrica de calzado Emssa Valems en Trujillo, Perú.
 
-REGLAS DE ORO (OBLIGATORIAS):
-1. RESPONDE ÚNICA Y EXCLUSIVAMENTE CON EL MENSAJE FINAL QUE LEERÁ EL USUARIO.
-2. NUNCA escribas tus pensamientos internos, ni "Option 1", ni "Role:", ni "Goal:".
-3. NO des opciones múltiples, elige tú la mejor respuesta y entrégala directamente.
-4. Sé amable, profesional, directo y conversacional.
+INVENTARIO DE MATERIALES ACTUAL:
+${JSON.stringify(insumos)}
 
-DATOS EN TIEMPO REAL:
-- Insumos: ${JSON.stringify(insumos?.slice(0,15))}
-- Productos: ${JSON.stringify(zapatos?.slice(0,15))}
-    `;
+ALMACÉN DE PRODUCTO TERMINADO:
+${JSON.stringify(zapatos)}
 
-    // --- 2. LLAMADA A GEMMA 4 (CON ESTRUCTURA DE ROLES OFICIAL) ---
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key=${apiKey}`;
+ÚLTIMOS MOVIMIENTOS DEL KÁRDEX:
+${JSON.stringify(kardex)}
+
+NORMAS DE COMPORTAMIENTO:
+- Habla siempre en español peruano, de forma directa y profesional.
+- Responde SOLO con el mensaje final. Sin razonamientos, sin opciones, sin metadatos.
+- Si detectas stock bajo (menor al stock_alerta), avísalo proactivamente.
+- Usa los datos reales de arriba en tus respuestas.
+- Sé conciso: máximo 3-4 oraciones salvo que se pida un reporte.`;
+
+    // --- 3. CONSTRUCCIÓN DEL HISTORIAL DE CONVERSACIÓN ---
+    const contents = [];
     
+    // Añadir historial previo para que recuerde el contexto
+    if (history && history.length > 0) {
+      history.slice(-6).forEach(h => {
+        contents.push({
+          role: h.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: h.content }]
+        });
+      });
+    }
+
+    // Añadir el mensaje actual del usuario
+    contents.push({ role: 'user', parts: [{ text: message }] });
+
+    // --- 4. LLAMADA A LA API CON ESTRUCTURA CORRECTA ---
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
+
     const resAI = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: systemContext }]
-        },
-        contents: [
-          { role: "user", parts: [{ text: message }] }
-        ]
+        systemInstruction: { parts: [{ text: sistemaInstruccion }] },
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 512,
+          topP: 0.9
+        }
       })
     });
 
     const dataAI = await resAI.json();
-    let aiText = dataAI.candidates?.[0]?.content?.parts?.[0]?.text || "No pude generar una respuesta. ¿Podrías intentar de nuevo?";
 
-    // Limpieza extrema por si el modelo ignora la estructura
-    if (aiText.includes("Option 3")) {
-       const parts = aiText.split(/Option 3[^:]*:/);
-       if (parts.length > 1) aiText = parts[1];
+    // Manejo de errores de la API
+    if (dataAI.error) {
+      console.error('[Gemini Error]:', dataAI.error);
+      return res.status(200).json({ response: `Error del modelo: ${dataAI.error.message}` });
     }
-    aiText = aiText.replace(/\*.*?\*/g, "").replace(/Role:[\s\S]*?Goal:/gi, "").trim();
+
+    const aiText = dataAI.candidates?.[0]?.content?.parts?.[0]?.text?.trim() 
+      || "No pude procesar tu solicitud en este momento. ¿Podrías reformular tu pregunta?";
 
     return res.status(200).json({ response: aiText });
 
   } catch (error) {
-    return res.status(200).json({ response: "Error crítico en el servidor." });
+    console.error('[AI-Assistant Critical Error]:', error);
+    return res.status(200).json({ response: "Error interno del servidor. Por favor, intenta de nuevo." });
   }
 }
