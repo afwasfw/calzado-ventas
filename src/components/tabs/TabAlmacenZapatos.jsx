@@ -52,7 +52,7 @@ export default function TabAlmacenZapatos() {
   return (
     <>
       <div className="max-w-7xl mx-auto px-6 py-8 md:py-12 animate-fade-in-up relative z-10">
-        
+
         {/* HEADER INDUSTRIAL */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
@@ -63,20 +63,19 @@ export default function TabAlmacenZapatos() {
               Inventario físico de calzado terminado listo para despacho.
             </p>
           </div>
-          
+
           <div className="flex gap-3">
-            <button 
+            <button
               onClick={() => setShowArchived(!showArchived)}
-              className={`flex items-center gap-2 font-bold py-3 px-6 rounded-xl transition-all border ${
-                showArchived 
-                ? 'bg-red-500/10 text-red-500 border-red-500/30' 
-                : 'bg-transparent text-gray-400 border-[#333] hover:border-gray-500'
-              }`}
+              className={`flex items-center gap-2 font-bold py-3 px-6 rounded-xl transition-all border ${showArchived
+                  ? 'bg-red-500/10 text-red-500 border-red-500/30'
+                  : 'bg-transparent text-gray-400 border-[#333] hover:border-gray-500'
+                }`}
             >
               <Archive className="w-5 h-5" />
               {showArchived ? 'Ver Activos' : 'Ver Archivados'}
             </button>
-            <button 
+            <button
               onClick={() => setIsBatchOpen(true)}
               className="flex items-center gap-2 bg-[#25D366] hover:bg-[#20b858] text-black font-bold py-3 px-6 rounded-xl transition-transform active:scale-95 shadow-[0_0_20px_rgba(37,211,102,0.3)]"
             >
@@ -114,100 +113,100 @@ export default function TabAlmacenZapatos() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1a1a1a]">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="5" className="py-20 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <Package className="w-10 h-10 text-gray-700 animate-bounce" />
-                          <p className="text-gray-500 font-bold tracking-widest uppercase text-xs">Sincronizando Almacén...</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : filteredGoods.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className="py-20 text-center">
-                        <p className="text-gray-600 font-medium">No se encontraron productos con estos criterios.</p>
-                      </td>
-                    </tr>
-                  ) : filteredGoods.map((item) => (
-                    <tr key={item.id} className="hover:bg-[#161616] transition-colors group">
-                      
-                      {/* MINIATURA */}
-                      <td className="py-3 px-6">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#333] bg-black">
-                          <img 
-                            src={item.foto_url || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=100'} 
-                            alt={item.codigo_modelo} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                        </div>
-                      </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="py-20 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <Package className="w-10 h-10 text-gray-700 animate-bounce" />
+                        <p className="text-gray-500 font-bold tracking-widest uppercase text-xs">Sincronizando Almacén...</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredGoods.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="py-20 text-center">
+                      <p className="text-gray-600 font-medium">No se encontraron productos con estos criterios.</p>
+                    </td>
+                  </tr>
+                ) : filteredGoods.map((item) => (
+                  <tr key={item.id} className="hover:bg-[#161616] transition-colors group">
 
-                      {/* CODIGO Y COLOR */}
-                      <td className="py-3 px-6">
-                        <div className="flex flex-col">
-                          <span className="text-white font-mono font-bold text-lg leading-none">#{item.codigo_modelo}</span>
-                          <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">{item.color_fisico || 'COLOR BASE'}</span>
-                        </div>
-                      </td>
+                    {/* MINIATURA */}
+                    <td className="py-3 px-6">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden border border-[#333] bg-black">
+                        <img
+                          src={item.foto_url || 'https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=100'}
+                          alt={item.codigo_modelo}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      </div>
+                    </td>
 
-                      {/* TACO Y SERIE */}
-                      <td className="py-3 px-6 text-center">
-                        <div className="flex flex-col items-center">
-                          <span className="text-xs text-gray-300 font-semibold">Taco {item.taco}</span>
-                          <span className="text-[10px] text-gray-500 font-medium">Ser. {item.serie}</span>
-                        </div>
-                      </td>
+                    {/* CODIGO Y COLOR */}
+                    <td className="py-3 px-6">
+                      <div className="flex flex-col">
+                        <span className="text-white font-mono font-bold text-lg leading-none">#{item.codigo_modelo}</span>
+                        <span className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mt-1">{item.color_fisico || 'COLOR BASE'}</span>
+                      </div>
+                    </td>
 
-                      {/* STOCK EN DOCENAS */}
-                      <td className="py-3 px-6 text-center">
-                        <div className={`inline-block px-4 py-1.5 rounded-xl border font-mono font-bold text-xl
-                          ${item.stock_docenas > 0 
-                            ? 'text-[#25D366] bg-[#25D366]/5 border-[#25D366]/20' 
-                            : 'text-red-500 bg-red-500/5 border-red-500/20'}`}
+                    {/* TACO Y SERIE */}
+                    <td className="py-3 px-6 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs text-gray-300 font-semibold">Taco {item.taco}</span>
+                        <span className="text-[10px] text-gray-500 font-medium">Ser. {item.serie}</span>
+                      </div>
+                    </td>
+
+                    {/* STOCK EN DOCENAS */}
+                    <td className="py-3 px-6 text-center">
+                      <div className={`inline-block px-4 py-1.5 rounded-xl border font-mono font-bold text-xl
+                          ${item.stock_docenas > 0
+                          ? 'text-[#25D366] bg-[#25D366]/5 border-[#25D366]/20'
+                          : 'text-red-500 bg-red-500/5 border-red-500/20'}`}
+                      >
+                        {item.stock_docenas} <span className="text-xs font-normal opacity-60">DOC</span>
+                      </div>
+                    </td>
+
+                    {/* ACCIONES */}
+                    <td className="py-3 px-6">
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => { setSelectedGood(item); setIsDetailsOpen(true); }}
+                          className="p-2.5 bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white rounded-xl transition-all border border-transparent hover:border-[#444] group-hover:scale-105 active:scale-95"
+                          title="Ver Detalles y Movimientos"
                         >
-                          {item.stock_docenas} <span className="text-xs font-normal opacity-60">DOC</span>
-                        </div>
-                      </td>
-
-                      {/* ACCIONES */}
-                      <td className="py-3 px-6">
-                        <div className="flex justify-center">
-                          <button 
-                            onClick={() => { setSelectedGood(item); setIsDetailsOpen(true); }}
-                            className="p-2.5 bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white rounded-xl transition-all border border-transparent hover:border-[#444] group-hover:scale-105 active:scale-95"
-                            title="Ver Detalles y Movimientos"
-                          >
-                            <Eye className="w-5 h-5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+                          <Eye className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <ModalNuevoLote 
-        isOpen={isBatchOpen} 
-        onClose={() => setIsBatchOpen(false)} 
+      <ModalNuevoLote
+        isOpen={isBatchOpen}
+        onClose={() => setIsBatchOpen(false)}
         shoeDatabase={finishedGoods}
         onSuccess={() => {
           setIsBatchOpen(false);
           fetchFinishedGoods();
         }}
       />
-      
-      <ModalDetalleProductoTerminado 
-        isOpen={isDetailsOpen} 
-        onClose={() => setIsDetailsOpen(false)} 
+
+      <ModalDetalleProductoTerminado
+        isOpen={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
         goodData={selectedGood}
         onSuccess={fetchFinishedGoods}
       />
 
-      <ModalGestionCategoriasCalzado 
+      <ModalGestionCategoriasCalzado
         isOpen={isCategoryOpen}
         onClose={() => setIsCategoryOpen(false)}
         onUpdate={fetchFinishedGoods}

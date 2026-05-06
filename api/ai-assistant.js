@@ -6,43 +6,51 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(200).send('Active');
 
   try {
-    const { message, history = [] } = req.body;
-    
-    if (!process.env.GOOGLE_AI_API_KEY) {
+    const { message } = req.body;
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
+
+    if (!apiKey) {
       return res.status(200).json({ response: "Error: No se encontró la clave GOOGLE_AI_API_KEY." });
     }
 
-    // 1. CONTEXTO
+    // --- COMANDO SECRETO PARA LISTAR MODELOS ---
+    if (message.toUpperCase() === "LISTAR MODELOS") {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      const modelList = data.models?.map(m => m.name.replace('models/', '')).join(', ') || "No se pudo obtener la lista.";
+      return res.status(200).json({ response: `Modelos disponibles para tu clave: ${modelList}` });
+    }
+
+    // --- LÓGICA NORMAL ---
     const [{ data: insumos }, { data: zapatos }] = await Promise.all([
-      supabase.from('inventario_materiales').select('nombre, stock_actual, unidad_medida'),
+      supabase.from('inventario_materiales').select('nombre, stock_actual'),
       supabase.from('productos_finales').select('codigo_modelo, stock_docenas')
     ]);
 
-    const contexto = `Empresa: Emssa Valems. Insumos: ${JSON.stringify(insumos?.slice(0,15))}. Productos: ${JSON.stringify(zapatos?.slice(0,15))}`;
+    const context = `Empresa: Emssa Valems. Insumos: ${JSON.stringify(insumos?.slice(0,5))}. Zapatos: ${JSON.stringify(zapatos?.slice(0,5))}`;
 
-    // 2. LLAMADA CON GEMMA (El modelo que usas en WhatsApp)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-27b-it:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`;
-    
-    const resAI = await fetch(url, {
+    // Intentamos con Gemini 1.5 Flash primero, que es el estándar
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `${contexto}\n\nPregunta: ${message}\nRespuesta corta y profesional:` }] }]
+        contents: [{ parts: [{ text: `${context}\n\nPregunta: ${message}` }] }]
       })
     });
+    
+    const result = await response.json();
 
-    const dataAI = await resAI.json();
-
-    if (dataAI.error) {
-      // Si Gemma falla, intentamos con el modelo Pro por si acaso
-      return res.status(200).json({ response: `Error del modelo: ${dataAI.error.message}` });
+    if (result.error) {
+      return res.status(200).json({ response: `Error de Google: ${result.error.message}. Escribe 'LISTAR MODELOS' para ver cuáles puedes usar.` });
     }
 
-    const aiText = dataAI.candidates?.[0]?.content?.parts?.[0]?.text || "No pude procesar la respuesta.";
-
+    const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sin respuesta del modelo.";
     return res.status(200).json({ response: aiText });
 
   } catch (error) {
-    return res.status(200).json({ response: "Error interno en el servidor." });
+    return res.status(200).json({ response: "Error crítico en el servidor." });
   }
 }
