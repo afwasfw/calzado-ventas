@@ -29,30 +29,36 @@ export default async function handler(req, res) {
     ]);
 
     const context = `
-      Eres el asistente experto de Emssa Valems.
-      DATOS REALES:
-      Insumos: ${JSON.stringify(insumos?.slice(0,20))}
-      Almacén: ${JSON.stringify(zapatos?.slice(0,20))}
+      SISTEMA: Emssa Valems (Fábrica de Calzado en Trujillo).
+      INVENTARIO: ${JSON.stringify(insumos?.slice(0,15))}
+      PRODUCTOS: ${JSON.stringify(zapatos?.slice(0,15))}
+      
+      INSTRUCCIÓN CRÍTICA: 
+      - Responde directamente al usuario en español.
+      - NO incluyas opciones (Option 1, 2, 3).
+      - NO incluyas explicaciones de tu rol ni metadatos.
+      - Sé profesional y amable.
     `;
 
-    // --- 2. LLAMADA A GEMMA 4 (EL FUTURO) ---
+    // --- 2. LLAMADA A GEMMA 4 ---
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent?key=${apiKey}`;
     
     const resAI = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `${context}\n\nPregunta: ${message}\nRespuesta profesional en español:` }] }]
+        contents: [{ parts: [{ text: `${context}\n\nUsuario dice: "${message}"\nRespuesta final:` }] }]
       })
     });
 
     const dataAI = await resAI.json();
+    let aiText = dataAI.candidates?.[0]?.content?.parts?.[0]?.text || "No pude generar una respuesta.";
 
-    if (dataAI.error) {
-      return res.status(200).json({ response: `Error con Gemma 4: ${dataAI.error.message}. Intenta con 'LISTAR MODELOS'.` });
+    // Limpieza de seguridad por si Gemma sigue siendo charlatana
+    if (aiText.includes("Option 3")) {
+       aiText = aiText.split("Option 3 (Professional/Corporate):")[1] || aiText;
     }
-
-    const aiText = dataAI.candidates?.[0]?.content?.parts?.[0]?.text || "No obtuve respuesta de Gemma 4.";
+    aiText = aiText.replace(/\* Role:[\s\S]*?\* /g, "").trim();
 
     return res.status(200).json({ response: aiText });
 
