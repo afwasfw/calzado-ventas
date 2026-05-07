@@ -13,7 +13,8 @@ import {
   ChevronRight,
   FileText,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -30,6 +31,7 @@ export default function TabAsistenteIA() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [selectedReport, setSelectedReport] = useState(null);
   const scrollRef = useRef(null);
 
   // Cargar notificaciones iniciales
@@ -308,20 +310,24 @@ export default function TabAsistenteIA() {
                 </div>
               ) : (
                 notifications.map((n) => (
-                  <div key={n.id} className="p-3 bg-black/40 border border-[#222] rounded-xl hover:border-brand-gold/20 transition-colors">
+                  <button 
+                    key={n.id} 
+                    onClick={() => setSelectedReport(n)}
+                    className="w-full text-left p-3 bg-black/40 border border-[#222] rounded-xl hover:border-brand-gold/40 hover:bg-brand-gold/5 transition-all group"
+                  >
                     <div className="flex items-start gap-3">
-                      <div className="p-1.5 bg-green-500/20 text-green-500 rounded-lg">
+                      <div className="p-1.5 bg-green-500/20 text-green-500 rounded-lg group-hover:bg-brand-gold/20 group-hover:text-brand-gold transition-colors">
                         <CheckCircle2 className="w-3 h-3" />
                       </div>
-                      <div>
-                        <p className="text-[10px] text-white font-bold mb-1">{n.titulo}</p>
+                      <div className="overflow-hidden">
+                        <p className="text-[10px] text-white font-bold mb-1 group-hover:text-brand-gold transition-colors">{n.titulo}</p>
                         <p className="text-[11px] text-gray-500 leading-tight line-clamp-2">{n.mensaje}</p>
                         <p className="text-[8px] text-gray-700 mt-2 font-mono uppercase">
                           {new Date(n.created_at).toLocaleDateString()} • {new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>
@@ -330,6 +336,55 @@ export default function TabAsistenteIA() {
         </div>
 
       </div>
+
+      {/* MODAL PARA VER REPORTE COMPLETO */}
+      {selectedReport && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 animate-fade-in">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedReport(null)}></div>
+          <div className="relative w-full max-w-4xl max-h-[85vh] bg-[#111] border border-[#222] rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden animate-zoom-in">
+            
+            {/* Header Modal */}
+            <div className="flex items-center justify-between p-6 border-b border-[#222] bg-[#161616]">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-brand-gold/10 text-brand-gold rounded-xl">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white leading-none mb-1">{selectedReport.titulo}</h3>
+                  <p className="text-[10px] text-gray-500 font-mono uppercase tracking-widest">
+                    Generado el {new Date(selectedReport.created_at).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedReport(null)}
+                className="p-2 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Contenido Modal */}
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+              <div className="prose prose-invert max-w-none">
+                <div className="text-gray-300 whitespace-pre-wrap leading-relaxed text-sm md:text-base">
+                  {selectedReport.metadata?.full_report || selectedReport.mensaje}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Modal */}
+            <div className="p-6 border-t border-[#222] bg-[#0c0c0c] flex justify-end">
+              <button 
+                onClick={() => setSelectedReport(null)}
+                className="px-6 py-2 bg-[#222] hover:bg-[#333] text-white text-sm font-bold rounded-xl transition-all"
+              >
+                Cerrar Reporte
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -12,20 +12,21 @@ export default async function handler(req, res) {
       supabase.from('auditoria_inventario').select('*').order('created_at', { ascending: false }).limit(100)
     ]);
 
-    const promptAnalisis = `Analiza profundamente el estado de la fábrica de calzado Emssa Valems.
-    
+    const promptAnalisis = `Eres un consultor experto en gestión de fábricas de calzado en Trujillo, Perú. Analiza los siguientes datos de la fábrica "Emssa Valems".
+
     DATOS DE INVENTARIO:
     ${JSON.stringify(insumos)}
     
-    HISTORIAL DE KÁRDEX (Últimos 100 movimientos):
+    HISTORIAL DE KÁRDEX (Últimos movimientos):
     ${JSON.stringify(kardex)}
     
-    INSTRUCCIONES:
-    - Identifica materiales estancados o con stock crítico.
-    - Analiza tendencias de uso en el kárdex.
-    - Genera un reporte ejecutivo con recomendaciones de compra y alertas de desperdicio.
-    - Habla como un consultor experto en calzado de Trujillo.
-    - Responde en formato profesional para ser guardado en base de datos.`;
+    ESTRUCTURA DEL REPORTE:
+    1. RESUMEN EJECUTIVO (Máximo 2 párrafos).
+    2. ALERTAS CRÍTICAS (Lista de materiales que faltan o sobran).
+    3. RECOMENDACIONES DE COMPRA.
+    4. ANOMALÍAS EN LOS DATOS (Errores de costos o registros).
+
+    IMPORTANTE: Escribe en lenguaje natural, directo y profesional. No uses formato JSON ni bloques de código. Usa negritas para resaltar lo más importante.`;
 
     const apiKey = process.env.GOOGLE_AI_API_KEY;
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
