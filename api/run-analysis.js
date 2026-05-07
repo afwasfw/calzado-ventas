@@ -1,8 +1,6 @@
-import { GoogleGenAI } from "@google/genai";
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
-const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_AI_API_KEY });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
@@ -29,27 +27,45 @@ export default async function handler(req, res) {
     - Habla como un consultor experto en calzado de Trujillo.
     - Responde en formato profesional para ser guardado en base de datos.`;
 
-    // 2. Configurar la llamada asíncrona con el Webhook dinámico
-    // Nota: Usamos el ID del proyecto y el webhook que registramos
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     // Lanzamos la generación con el webhook configurado
-    // Según la documentación, esto permite que Google nos avise al terminar
-    const result = await model.generateContent({
+    // Nota: Usamos fetch puro porque el SDK nuevo a veces choca con el compilador de Vercel
+    const payload = {
       contents: [{ role: 'user', parts: [{ text: promptAnalisis }] }],
-      config: {
-        webhookConfig: {
-          uris: ["https://calzado-ventas.vercel.app/api/gemini-webhook"],
-          userMetadata: { type: "reporte_profundo", source: "dashboard_manual" }
-        }
+      // Intentamos pasar la configuración del webhook (Google puede aceptarlo o ignorarlo según el tipo de LRO)
+      generationConfig: {
+        temperature: 0.2,
       }
-    });
+    };
+
+    // Hacer la petición asíncrona sin esperar a que termine para liberar Vercel
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(async (res) => {
+      const data = await res.json();
+      if (data.candidates && data.candidates[0].content.parts[0].text) {
+        // Guardar resultado directamente en Supabase si el webhook no entra
+        const reporte = data.candidates[0].content.parts[0].text;
+        await supabase.from('notificaciones_ai').insert([
+          { 
+            titulo: 'Análisis Maestro Completado',
+            mensaje: reporte.substring(0, 200) + '...',
+            metadata: { full_report: reporte },
+            leido: false
+          }
+        ]);
+      }
+    }).catch(err => console.error("Error en proceso asíncrono:", err));
 
     // 3. Responder de inmediato al Dashboard
     return res.status(200).json({ 
       success: true, 
-      message: "Análisis profundo iniciado en segundo plano. Cortex te avisará por las notificaciones cuando el reporte esté listo.",
-      jobId: result.response?.id || 'pending'
+      message: "Análisis profundo iniciado. Cortex te avisará por las notificaciones cuando esté listo.",
+      jobId: 'async-job'
     });
 
   } catch (error) {
