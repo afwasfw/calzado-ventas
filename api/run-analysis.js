@@ -40,32 +40,36 @@ export default async function handler(req, res) {
       }
     };
 
-    // Hacer la petición asíncrona sin esperar a que termine para liberar Vercel
-    fetch(url, {
+    // Hacer la petición y ESPERAR para asegurar que Vercel no mate el proceso
+    const resAI = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
-    }).then(async (res) => {
-      const data = await res.json();
-      if (data.candidates && data.candidates[0].content.parts[0].text) {
-        // Guardar resultado directamente en Supabase si el webhook no entra
-        const reporte = data.candidates[0].content.parts[0].text;
-        await supabase.from('notificaciones_ai').insert([
-          { 
-            titulo: 'Análisis Maestro Completado',
-            mensaje: reporte.substring(0, 200) + '...',
-            metadata: { full_report: reporte },
-            leido: false
-          }
-        ]);
-      }
-    }).catch(err => console.error("Error en proceso asíncrono:", err));
+    });
 
-    // 3. Responder de inmediato al Dashboard
+    const data = await resAI.json();
+
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const reporte = data.candidates[0].content.parts[0].text;
+      
+      // Guardamos en Supabase y ESPERAMOS
+      const { error: insertError } = await supabase.from('notificaciones_ai').insert([
+        { 
+          titulo: 'Análisis Maestro Completado',
+          mensaje: reporte.substring(0, 250) + '...',
+          metadata: { full_report: reporte },
+          leido: false
+        }
+      ]);
+
+      if (insertError) throw insertError;
+    }
+
+    // 3. Responder al Dashboard cuando TODO esté listo
     return res.status(200).json({ 
       success: true, 
-      message: "Análisis profundo iniciado. Cortex te avisará por las notificaciones cuando esté listo.",
-      jobId: 'async-job'
+      message: "¡Análisis completado! Revisa tus reportes recientes.",
+      jobId: 'sync-job'
     });
 
   } catch (error) {
