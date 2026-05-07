@@ -10,9 +10,13 @@ import {
   TrendingUp,
   AlertTriangle,
   Zap,
-  ChevronRight
+  ChevronRight,
+  FileText,
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { toast } from 'react-hot-toast';
 
 export default function TabAsistenteIA() {
   const [messages, setMessages] = useState([
@@ -24,7 +28,55 @@ export default function TabAsistenteIA() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const scrollRef = useRef(null);
+
+  // Cargar notificaciones iniciales
+  useEffect(() => {
+    fetchNotifications();
+    
+    // Suscribirse a cambios en tiempo real en las notificaciones
+    const channel = supabase
+      .channel('notificaciones_ai_changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificaciones_ai' }, payload => {
+        setNotifications(prev => [payload.new, ...prev]);
+        toast.success('¡Nuevo reporte de IA disponible!');
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const fetchNotifications = async () => {
+    const { data } = await supabase
+      .from('notificaciones_ai')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (data) setNotifications(data);
+  };
+
+  const handleStartDeepAnalysis = async () => {
+    setIsAnalyzing(true);
+    toast.loading('Iniciando análisis profundo...', { id: 'analysis' });
+    
+    try {
+      const response = await fetch('/api/run-analysis', { method: 'POST' });
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success(data.message, { id: 'analysis', duration: 5000 });
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err) {
+      console.error('Error al lanzar análisis:', err);
+      toast.error('No se pudo iniciar el análisis. Revisa tu conexión.', { id: 'analysis' });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   // Auto-scroll al final del chat
   useEffect(() => {
@@ -224,22 +276,54 @@ export default function TabAsistenteIA() {
                   <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
                 </button>
               ))}
+              
+              <div className="pt-2">
+                <button 
+                  onClick={handleStartDeepAnalysis}
+                  disabled={isAnalyzing}
+                  className="w-full flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 border border-brand-gold/30 hover:border-brand-gold hover:bg-brand-gold/20 transition-all group relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite] skew-x-12"></div>
+                  <div className="p-2 bg-brand-gold text-black rounded-lg shadow-lg group-hover:scale-110 transition-transform">
+                    {isAnalyzing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[11px] font-black text-white uppercase tracking-tighter">Lanzar Análisis Maestro</p>
+                    <p className="text-[9px] text-brand-gold/70 font-bold uppercase tracking-widest">Procesamiento Asíncrono</p>
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="flex-1 bg-gradient-to-b from-[#161616] to-[#0c0c0c] border border-[#222] rounded-3xl p-6 shadow-2xl">
+          <div className="flex-1 bg-[#161616] border border-[#222] rounded-3xl p-6 shadow-2xl flex flex-col overflow-hidden">
             <h3 className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-3 h-3 text-brand-gold" /> Alertas Predictivas
+              <FileText className="w-3 h-3 text-brand-gold" /> Reportes de IA Recientes
             </h3>
-            <div className="space-y-4">
-               <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl">
-                  <p className="text-[10px] text-red-400 font-bold mb-1 leading-none uppercase">Crítico: Cuero</p>
-                  <p className="text-[11px] text-gray-500 leading-tight">Quedan menos de 100m. Reabastecer antes del viernes.</p>
-               </div>
-               <div className="p-3 bg-green-500/5 border border-green-500/10 rounded-xl">
-                  <p className="text-[10px] text-green-400 font-bold mb-1 leading-none uppercase">Producción OK</p>
-                  <p className="text-[11px] text-gray-500 leading-tight">Eficiencia de materiales +5% vs mes anterior.</p>
-               </div>
+            <div className="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-1">
+              {notifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full opacity-20 text-center p-4">
+                  <Clock className="w-8 h-8 mb-2" />
+                  <p className="text-[10px] font-bold uppercase">No hay reportes aún</p>
+                </div>
+              ) : (
+                notifications.map((n) => (
+                  <div key={n.id} className="p-3 bg-black/40 border border-[#222] rounded-xl hover:border-brand-gold/20 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="p-1.5 bg-green-500/20 text-green-500 rounded-lg">
+                        <CheckCircle2 className="w-3 h-3" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-white font-bold mb-1">{n.titulo}</p>
+                        <p className="text-[11px] text-gray-500 leading-tight line-clamp-2">{n.mensaje}</p>
+                        <p className="text-[8px] text-gray-700 mt-2 font-mono uppercase">
+                          {new Date(n.created_at).toLocaleDateString()} • {new Date(n.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
